@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # krushi_mithra
 
 A new Flutter project.
@@ -15,3 +16,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# krushi-mithra
+>>>>>>> 349a1af24829ec3cbbfc2804a08fee8e6f3e1c77
