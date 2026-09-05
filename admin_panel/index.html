@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krushi Mithra - Admin Dashboard & Platform Manager</title>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js for Interactive Dashboard Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="brand-logo" onclick="switchView('dashboard')">
+          <span class="brand-icon">🌾</span>
+          <span class="brand-text">Krushi Mithra</span>
+        </a>
+        <button class="toggle-sidebar-btn" id="toggle-sidebar" title="Toggle Sidebar">
+          <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-menu" id="sidebar-menu">
+        <div class="menu-group-label">Core Modules</div>
+
+        <a class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+          <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+          <span class="nav-text">Dashboard</span>
+        </a>
+        <a class="nav-item" data-view="users" onclick="switchView('users')">
+          <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+          <span class="nav-text">Users</span>
+        </a>
+        <a class="nav-item" data-view="farmers" onclick="switchView('farmers')">
+          <span class="nav-icon"><i class="fa-solid fa-tractor"></i></span>
+          <span class="nav-text">Farmers</span>
+        </a>
+        <a class="nav-item" data-view="machines" onclick="switchView('machines')">
+          <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
+          <span class="nav-text">Machines</span>
+        </a>
+        <a class="nav-item" data-view="workers" onclick="switchView('workers')">
+          <span class="nav-icon"><i class="fa-solid fa-user-ninja"></i></span>
+          <span class="nav-text">Workers & Drivers</span>
+        </a>
+        <a class="nav-item" data-view="provider-approvals" onclick="switchView('provider-approvals')">
+          <span class="nav-icon"><i class="fa-solid fa-user-check"></i></span>
+          <span class="nav-text">Provider Approvals</span>
+        </a>
+        <a class="nav-item" data-view="bookings" onclick="switchView('bookings')">
+          <span class="nav-icon"><i class="fa-solid fa-calendar-check"></i></span>
+          <span class="nav-text">Bookings</span>
+        </a>
+
+        <div class="menu-group-label">Marketplace & Store</div>
+
+        <a class="nav-item" data-view="marketplace" onclick="switchView('marketplace')">
+          <span class="nav-icon"><i class="fa-solid fa-wheat-awn"></i></span>
+          <span class="nav-text">Marketplace</span>
+        </a>
+        <a class="nav-item" data-view="store" onclick="switchView('store')">
+          <span class="nav-icon"><i class="fa-solid fa-store"></i></span>
+          <span class="nav-text">Agro Store</span>
+        </a>
+        <a class="nav-item" data-view="categories" onclick="switchView('categories')">
+          <span class="nav-icon"><i class="fa-solid fa-tags"></i></span>
+          <span class="nav-text">Categories</span>
+        </a>
+        <a class="nav-item" data-view="locations" onclick="switchView('locations')">
+          <span class="nav-icon"><i class="fa-solid fa-location-dot"></i></span>
+          <span class="nav-text">Locations</span>
+        </a>
+
+        <div class="menu-group-label">Engagement & CMS</div>
+
+        <a class="nav-item" data-view="mobile-manager" onclick="switchView('mobile-manager')">
+          <span class="nav-icon"><i class="fa-solid fa-mobile-screen-button"></i></span>
+          <span class="nav-text">Mobile App Manager</span>
+        </a>
+        <a class="nav-item" data-view="banners" onclick="switchView('banners')">
+          <span class="nav-icon"><i class="fa-solid fa-image"></i></span>
+          <span class="nav-text">Banners & Promotions</span>
+        </a>
+        <a class="nav-item" data-view="notifications" onclick="switchView('notifications')">
+          <span class="nav-icon"><i class="fa-solid fa-paper-plane"></i></span>
+          <span class="nav-text">Notifications</span>
+        </a>
+        <a class="nav-item" data-view="reviews" onclick="switchView('reviews')">
+          <span class="nav-icon"><i class="fa-solid fa-star"></i></span>
+          <span class="nav-text">Reviews & Ratings</span>
+        </a>
+
+        <div class="menu-group-label">Operations & Admin</div>
+
+        <a class="nav-item" data-view="reports" onclick="switchView('reports')">
+          <span class="nav-icon"><i class="fa-solid fa-file-invoice"></i></span>
+          <span class="nav-text">Reports & Analytics</span>
+        </a>
+        <a class="nav-item" data-view="payments" onclick="switchView('payments')">
+          <span class="nav-icon"><i class="fa-solid fa-indian-rupee-sign"></i></span>
+          <span class="nav-text">Payments</span>
+        </a>
+        <a class="nav-item" data-view="support" onclick="switchView('support')">
+          <span class="nav-icon"><i class="fa-solid fa-headset"></i></span>
+          <span class="nav-text">Support</span>
+        </a>
+        <a class="nav-item" data-view="admin-users" onclick="switchView('admin-users')">
+          <span class="nav-icon"><i class="fa-solid fa-user-shield"></i></span>
+          <span class="nav-text">Admin Users</span>
+        </a>
+        <a class="nav-item" data-view="activity-logs" onclick="switchView('activity-logs')">
+          <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+          <span class="nav-text">Activity Logs</span>
+        </a>
+        <a class="nav-item" data-view="settings" onclick="switchView('settings')">
+          <span class="nav-icon"><i class="fa-solid fa-sliders"></i></span>
+          <span class="nav-text">Settings</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-wrapper">
+      <!-- TOP HEADER -->
+      <header class="top-header">
+        <div class="header-search">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="global-search" placeholder="Global Search: Machines, Farmers, Workers, Bookings..." oninput="handleGlobalSearch(this.value)">
+        </div>
+
+        <div class="header-actions">
+          <button class="header-btn" onclick="switchView('notifications')" title="Notifications">
+            <i class="fa-regular fa-bell"></i>
+            <span class="notification-badge" id="notif-count-badge">2</span>
+          </button>
+
+          <div class="admin-profile" onclick="toggleAdminMenu()">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Admin Avatar" class="admin-avatar">
+            <div class="admin-info">
+              <span class="admin-name">Bharath Admin</span>
+              <span class="admin-role">Super Administrator</span>
+            </div>
+            <i class="fa-solid fa-chevron-down" style="font-size: 11px; color: var(--gray-text);"></i>
+          </div>
+        </div>
+      </header>
+
+      <!-- DYNAMIC CONTENT VIEW -->
+      <main class="content-area" id="content-area">
+        <!-- Views will be injected by app.js -->
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL CONTAINER FOR DIALOGS & FORMS -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-container" id="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Modal Title</h3>
+        <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Dynamic Modal Form Content -->
+      </div>
+      <div class="modal-footer" id="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="modal-submit-btn" onclick="submitModal()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- JS ENGINE -->
+  <script src="app.js"></script>
+</body>
+</html>

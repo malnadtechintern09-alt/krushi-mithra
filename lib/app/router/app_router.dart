@@ -1,30 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/home/presentation/screens/home_screen.dart';
-import '../../features/machinery/presentation/screens/machinery_list_screen.dart';
-import '../../features/machinery/presentation/screens/machinery_detail_screen.dart';
-import '../../features/machinery/presentation/screens/book_machine_screen.dart';
-import '../../features/machinery/presentation/screens/add_machine_screen.dart';
-
-import '../../features/workers/presentation/screens/worker_list_screen.dart';
-import '../../features/workers/presentation/screens/worker_detail_screen.dart';
-import '../../features/workers/presentation/screens/book_worker_screen.dart';
-import '../../features/workers/presentation/screens/register_worker_screen.dart';
-
-import '../../features/marketplace/presentation/screens/marketplace_list_screen.dart';
-import '../../features/marketplace/presentation/screens/product_detail_screen.dart';
-import '../../features/marketplace/presentation/screens/create_listing_screen.dart';
-
+import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/agro_store/presentation/screens/agro_store_screen.dart';
 import '../../features/agro_store/presentation/screens/cart_screen.dart';
 import '../../features/agro_store/presentation/screens/checkout_screen.dart';
 import '../../features/agro_store/presentation/screens/order_success_screen.dart';
-
 import '../../features/bookings_orders/presentation/screens/my_orders_screen.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/machinery/presentation/screens/add_machine_screen.dart';
+import '../../features/machinery/presentation/screens/book_machine_screen.dart';
+import '../../features/machinery/presentation/screens/machinery_detail_screen.dart';
+import '../../features/machinery/presentation/screens/machinery_list_screen.dart';
+import '../../features/marketplace/presentation/screens/create_listing_screen.dart';
+import '../../features/marketplace/presentation/screens/marketplace_list_screen.dart';
+import '../../features/marketplace/presentation/screens/product_detail_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
-import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
-
+import '../../features/provider/presentation/screens/join_provider_screen.dart';
+import '../../features/provider/presentation/screens/my_applications_screen.dart';
+import '../../features/workers/presentation/screens/book_worker_screen.dart';
+import '../../features/workers/presentation/screens/register_worker_screen.dart';
+import '../../features/workers/presentation/screens/worker_detail_screen.dart';
+import '../../features/workers/presentation/screens/worker_list_screen.dart';
 import 'main_navigation_shell.dart';
 import 'route_names.dart';
 import 'route_paths.dart';
@@ -40,7 +37,7 @@ final appRouter = GoRouter(
         return MainNavigationShell(navigationShell: navigationShell);
       },
       branches: [
-        // Tab 1: Home
+        // Tab 0: Home
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -51,13 +48,23 @@ final appRouter = GoRouter(
           ],
         ),
 
-        // Tab 2: Machinery
+        // Tab 1: Machines
         StatefulShellBranch(
           routes: [
             GoRoute(
               path: RoutePaths.machinery,
               name: RouteNames.machinery,
               builder: (context, state) => const MachineryListScreen(),
+            ),
+          ],
+        ),
+
+        // Tab 2: Post Ad (Triggers Modal Sheet in MainNavigationShell)
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/post-ad-placeholder',
+              builder: (context, state) => const SizedBox.shrink(),
             ),
           ],
         ),
@@ -73,24 +80,13 @@ final appRouter = GoRouter(
           ],
         ),
 
-        // Tab 4: Marketplace
+        // Tab 4: History & Activity Details
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: RoutePaths.marketplace,
-              name: RouteNames.marketplace,
-              builder: (context, state) => const MarketplaceListScreen(),
-            ),
-          ],
-        ),
-
-        // Tab 5: Agro Store
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: RoutePaths.agroStore,
-              name: RouteNames.agroStore,
-              builder: (context, state) => const AgroStoreScreen(),
+              path: RoutePaths.myOrders,
+              name: RouteNames.myOrders,
+              builder: (context, state) => const MyOrdersScreen(),
             ),
           ],
         ),
@@ -98,6 +94,19 @@ final appRouter = GoRouter(
     ),
 
     // Push routes outside shell (Full screen views)
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RoutePaths.marketplace,
+      name: RouteNames.marketplace,
+      builder: (context, state) => const MarketplaceListScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RoutePaths.agroStore,
+      name: RouteNames.agroStore,
+      builder: (context, state) => const AgroStoreScreen(),
+    ),
+
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/machinery/add',
@@ -181,19 +190,6 @@ final appRouter = GoRouter(
       path: RoutePaths.orderSuccess,
       name: RouteNames.orderSuccess,
       builder: (context, state) => const OrderSuccessScreen(),
-    ),
-
-    GoRoute(
-      parentNavigatorKey: _rootNavigatorKey,
-      path: RoutePaths.myOrders,
-      name: RouteNames.myOrders,
-      builder: (context, state) => const MyOrdersScreen(),
-    ),
-    GoRoute(
-      parentNavigatorKey: _rootNavigatorKey,
-      path: RoutePaths.profile,
-      name: RouteNames.profile,
-      builder: (context, state) => const ProfileScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

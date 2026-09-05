@@ -44,7 +44,25 @@ class _RegisterWorkerScreenState extends ConsumerState<RegisterWorkerScreen> {
     final user = ref.watch(authProvider).value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Register as Worker / Operator')),
+      backgroundColor: AppColors.warmBackground,
+      appBar: AppBar(
+        backgroundColor: AppColors.warmBackground,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.warmDarkBrown),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.warmDarkBrown, size: 24),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Register as Worker / Operator',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: AppColors.warmDarkBrown,
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(

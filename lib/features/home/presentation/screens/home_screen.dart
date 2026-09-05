@@ -3,576 +3,1225 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
-import '../../../../app/config/constants.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/rating_stars.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/animated_farm_background.dart';
+import '../../../../core/widgets/app_drawer.dart';
+import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../machinery/presentation/providers/machinery_provider.dart';
-import '../../../workers/presentation/providers/worker_provider.dart';
-import '../../../marketplace/presentation/providers/marketplace_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final userAsync = ref.watch(authProvider);
-    final user = userAsync.value;
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final Set<String> _favorites = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(authProvider).value;
     final machinesAsync = ref.watch(machineryListProvider);
-    final workersAsync = ref.watch(workerListProvider);
-    final productsAsync = ref.watch(marketplaceProductsProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.warmBackground,
+      drawer: const AppDrawer(),
       appBar: AppBar(
+        backgroundColor: AppColors.warmBackground,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: AppColors.warmDarkBrown, size: 26),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                'assets/images/app_logo.png',
-                width: 36,
-                height: 36,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(Icons.agriculture_rounded, color: AppColors.accentGold, size: 28),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFF1E5631),
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/app_logo.png',
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const Icon(Icons.agriculture_rounded, color: AppColors.accentGold, size: 22),
+                ),
               ),
             ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                 const Text(
-                  'Krushi Mithra',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(color: AppColors.accentGold, blurRadius: 10),
-                      Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(0, 2)),
-                    ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Krushi Mithra',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.warmDarkBrown,
+                    ),
                   ),
-                ),
-                Text(
-                  user?.locationName ?? 'Shivamogga, KA',
-                  style: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500),
-                ),
-              ],
+                  GestureDetector(
+                    onTap: () => _showLocationSelectionBottomSheet(context, ref, user),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            user?.locationName ?? 'Shivamogga, KA',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary, size: 14),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
+          // Notification Bell
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded),
+            icon: const Icon(Icons.notifications_none_rounded, color: AppColors.warmDarkBrown, size: 24),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No new notifications')),
+                const SnackBar(content: Text('Notifications: 3 new updates')),
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.admin_panel_settings_outlined),
-            tooltip: 'Admin Portal',
-            onPressed: () => context.push('/admin'),
+
+          // Message/Chat Icon with Red Badge '3'
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.warmDarkBrown, size: 22),
+                onPressed: () => context.push('/my-orders'),
+              ),
+              Positioned(
+                top: 10,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.redAccent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text(
+                    '3',
+                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
           ),
+          const SizedBox(width: 4),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Animated Farm Landscape Background Header
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-              child: AnimatedFarmBackground(
-                height: 150,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Namaste, ${user?.name ?? 'Farmer'} 👋',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 23,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
-                          shadows: [
-                            Shadow(color: AppColors.accentGold, blurRadius: 12),
-                            Shadow(color: Color(0xFF0F3D1E), blurRadius: 6, offset: Offset(0, 2)),
-                            Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentGold,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.accentGold.withValues(alpha: 0.6),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              'Role: ${user?.role ?? 'Farmer'}',
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.2),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+
+      body: RefreshIndicator(
+        color: AppColors.primaryGreen,
+        onRefresh: () async {
+          ref.invalidate(machineryListProvider);
+          await ref.read(machineryListProvider.future);
+        },
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+            // 1. Hero Landscape Banner Container with High-Contrast Pill Badges
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    height: 245,
+                    width: double.infinity,
+                    child: AnimatedFarmBackground(
+                      height: 245,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 36),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.location_on, color: AppColors.accentGold, size: 14),
-                                const SizedBox(width: 4),
-                                Text(
-                                  user?.locationName ?? 'Shivamogga',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
+                                const Text(
+                                  'Namaste,',
+                                  style: TextStyle(
+                                    color: Color(0xFF2D1C10),
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    shadows: [
+                                      Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.white),
+                                    ],
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        (user?.name ?? 'Bharath Poojary').split(' ').map((str) => str.isNotEmpty ? '${str[0].toUpperCase()}${str.substring(1).toLowerCase()}' : '').join(' '),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Color(0xFF2D1C10),
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: [
+                                            Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.white),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Text('👋', style: TextStyle(fontSize: 20)),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                const Text(
+                                  'Together we grow,',
+                                  style: TextStyle(
+                                    color: Color(0xFF2D1C10),
+                                    fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                     shadows: [
-                                      Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 1)),
+                                      Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.white),
+                                    ],
+                                  ),
+                                ),
+                                const Text(
+                                  'together we prosper.',
+                                  style: TextStyle(
+                                    color: Color(0xFF2D1C10),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.white),
                                     ],
                                   ),
                                 ),
                               ],
                             ),
+
+                            // Interactive Pill Badges Row
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: [
+                                  // 1. Amber/Orange Role Pill Badge ("Farmer")
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: () => _showRoleSelectionBottomSheet(context, ref, user),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFA000), // Vibrant Amber/Orange Fill
+                                          borderRadius: BorderRadius.circular(20),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFFFFA000).withValues(alpha: 0.3),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.person, size: 14, color: AppColors.warmDarkBrown),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              user?.role ?? 'Farmer',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.warmDarkBrown,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.warmDarkBrown),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+
+                                  // 2. Crisp White Location Pill Badge ("Shivamogga, KA")
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: () => _showLocationSelectionBottomSheet(context, ref, user),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: AppColors.warmBorder, width: 1),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.05),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.location_on, size: 14, color: Color(0xFFFF6F00)),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              user?.locationName ?? 'Shivamogga, KA',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.warmDarkBrown,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFFFF6F00)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Floating Search Box & Solid Orange Filter Button
+                Positioned(
+                  bottom: -22,
+                  left: 28,
+                  right: 28,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.warmBorder, width: 1),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
-                        ],
+                          child: TextField(
+                            onSubmitted: (_) => context.go('/machinery'),
+                            decoration: const InputDecoration(
+                              hintText: 'Search tractors, harvesters, tillers...',
+                              hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                              prefixIcon: Icon(Icons.search_rounded, color: AppColors.textMuted, size: 22),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Solid Orange Filter Button
+                      GestureDetector(
+                        onTap: () => context.go('/machinery'),
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF6F00), // Solid Orange
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF6F00).withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 38),
 
-            // Main Service Quick Action Cards (4 Grid Items)
+            // 2. 4 Horizontal Action Category Cards Row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
                 children: [
-                  const Text(
-                    'Agricultural Services',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                  Expanded(
+                    child: _buildActionCategoryCard(
+                      context: context,
+                      title: 'Rent\nMachinery',
+                      icon: Icons.agriculture_rounded,
+                      bgColor: const Color(0xFFF1F8F3), // Soft Mint Green
+                      iconColor: const Color(0xFF2E7D32),
+                      onTap: () => context.go('/machinery'),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.35,
-                    children: [
-                      _buildQuickCard(
-                        context,
-                        title: 'Rent Machinery',
-                        subtitle: 'Tractors, Harvesters & Tillers',
-                        icon: Icons.agriculture,
-                        color: const Color(0xFFE8F5E9),
-                        iconColor: AppColors.primaryGreen,
-                        onTap: () => context.go('/machinery'),
-                      ),
-                      _buildQuickCard(
-                        context,
-                        title: 'Hire Workers',
-                        subtitle: 'Drivers, Harvesters & Labor',
-                        icon: Icons.engineering,
-                        color: const Color(0xFFFFF3E0),
-                        iconColor: AppColors.warning,
-                        onTap: () => context.go('/workers'),
-                      ),
-                      _buildQuickCard(
-                        context,
-                        title: 'Buy & Sell Produce',
-                        subtitle: 'Arecanut, Pepper, Crops',
-                        icon: Icons.storefront_rounded,
-                        color: const Color(0xFFE3F2FD),
-                        iconColor: AppColors.info,
-                        onTap: () => context.go('/marketplace'),
-                      ),
-                      _buildQuickCard(
-                        context,
-                        title: 'Agro Store',
-                        subtitle: 'Seeds, Fertilisers & Tools',
-                        icon: Icons.local_florist,
-                        color: const Color(0xFFF3E5F5),
-                        iconColor: Colors.purple,
-                        onTap: () => context.go('/agro-store'),
-                      ),
-                    ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildActionCategoryCard(
+                      context: context,
+                      title: 'Hire\nWorkers',
+                      icon: Icons.groups_rounded,
+                      bgColor: const Color(0xFFFFF6ED), // Soft Peach/Orange
+                      iconColor: const Color(0xFFE65100),
+                      onTap: () => context.go('/workers'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildActionCategoryCard(
+                      context: context,
+                      title: 'Buy & Sell\nProduce',
+                      icon: Icons.shopping_basket_rounded,
+                      bgColor: const Color(0xFFEFF6FF), // Soft Blue
+                      iconColor: const Color(0xFF1565C0),
+                      onTap: () => context.push('/marketplace'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildActionCategoryCard(
+                      context: context,
+                      title: 'Agro\nStore',
+                      icon: Icons.storefront_rounded,
+                      bgColor: const Color(0xFFF5F3FF), // Soft Purple
+                      iconColor: const Color(0xFF7E57C2),
+                      onTap: () => context.push('/agro-store'),
+                    ),
                   ),
                 ],
               ),
             ),
 
+            const SizedBox(height: 16),
+
+            // Provider / Worker Join Banner Card
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GestureDetector(
+                onTap: () => context.push('/provider/join'),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.agriculture_rounded, color: Colors.white, size: 28),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Have a Machine or Farming Skill?',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Join as Owner / Worker to start earning',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6F00),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Join Now',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
             const SizedBox(height: 24),
 
-            // Featured Machinery Section
-            _buildSectionHeader(
-              title: '🚜 Nearby Machines for Rent',
-              onSeeAll: () => context.go('/machinery'),
+            // 3. Section Header: "Top Machines Near You"
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Top Machines Near You',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppColors.warmDarkBrown,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => context.go('/machinery'),
+                    child: const Row(
+                      children: [
+                        Text(
+                          'See all',
+                          style: TextStyle(
+                            color: Color(0xFFFF6F00),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        SizedBox(width: 2),
+                        Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFFF6F00)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 210,
+            const SizedBox(height: 12),
+
+            // 4. Vertical Machine Cards List ("Top Machines Near You")
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: machinesAsync.when(
-                data: (machines) => ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: machines.length,
-                  itemBuilder: (ctx, i) {
-                    final m = machines[i];
-                    return Container(
-                      width: 220,
-                      margin: const EdgeInsets.only(right: 14),
-                      child: Card(
-                        clipBehavior: Clip.antiAlias,
+                data: (machines) {
+                  final distances = ['2.4 km', '3.1 km', '1.8 km', '4.3 km'];
+
+                  return Column(
+                    children: List.generate(machines.length, (i) {
+                      final m = machines[i];
+                      final dist = distances[i % distances.length];
+                      final isFav = _favorites.contains(m.id);
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.warmBorder, width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
                         child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
                           onTap: () => context.push('/machinery/${m.id}'),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              AppImage(
-                                url: m.images.first,
-                                height: 110,
-                                width: double.infinity,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Machine Image with Distance Overlay Pill
+                                Stack(
                                   children: [
-                                    Text(
-                                      m.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: AppImage(
+                                        url: m.images.first,
+                                        width: 115,
+                                        height: 105,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            '${Formatters.currency(m.rentalPricePerDay)}/day',
-                                            style: const TextStyle(
-                                              color: AppColors.primaryGreen,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
+                                    Positioned(
+                                      bottom: 6,
+                                      left: 6,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.95),
+                                          borderRadius: BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.08),
+                                              blurRadius: 4,
                                             ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                          ],
                                         ),
-                                        RatingStars(rating: m.rating, showText: false),
-                                      ],
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.location_on, size: 10, color: AppColors.warmDarkBrown),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              dist,
+                                              style: const TextStyle(
+                                                color: AppColors.warmDarkBrown,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Text('Error loading machines: $err'),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Skilled Workers Nearby Section
-            _buildSectionHeader(
-              title: '👷 Experienced Farm Operators',
-              onSeeAll: () => context.go('/workers'),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 160,
-              child: workersAsync.when(
-                data: (workers) => ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: workers.length,
-                  itemBuilder: (ctx, i) {
-                    final w = workers[i];
-                    return Container(
-                      width: 250,
-                      margin: const EdgeInsets.only(right: 14),
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 22,
-                                    backgroundImage: NetworkImage(w.profilePhoto),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                w.name,
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            if (w.isVerified)
-                                              const Icon(Icons.verified, color: AppColors.primaryGreen, size: 16),
-                                          ],
-                                        ),
-                                        Text(
-                                          w.skills.first,
-                                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Spacer(),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '${Formatters.currency(w.dailyRate)}/day',
-                                    style: const TextStyle(
-                                      color: AppColors.primaryGreen,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  RatingStars(rating: w.rating, showText: false),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Text('Error loading workers: $err'),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Fresh Farm Produce Marketplace Preview
-            _buildSectionHeader(
-              title: '🛒 Fresh Harvest Marketplace',
-              onSeeAll: () => context.go('/marketplace'),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: productsAsync.when(
-                data: (products) {
-                  final displayList = products.take(3).toList();
-                  return Column(
-                    children: displayList.map((p) {
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () => context.push('/marketplace/${p.id}'),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    p.images.first,
-                                    width: 55,
-                                    height: 55,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
-                                      width: 55,
-                                      height: 55,
-                                      color: AppColors.chipBackground,
-                                      child: const Icon(Icons.storefront, color: AppColors.primaryGreen),
-                                    ),
-                                  ),
-                                ),
                                 const SizedBox(width: 12),
+
+                                // Machine Details Column
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        p.title,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      // Title & Heart Favorite Row
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (m.isNew) ...[
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                              margin: const EdgeInsets.only(right: 5, top: 1),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF7E57C2),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: const Text(
+                                                'NEW',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 8.5,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          Expanded(
+                                            child: Text(
+                                              m.name,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13.5,
+                                                color: AppColors.warmDarkBrown,
+                                                height: 1.25,
+                                              ),
+                                            ),
+                                          ),
+                                          GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                if (isFav) {
+                                                  _favorites.remove(m.id);
+                                                } else {
+                                                  _favorites.add(m.id);
+                                                }
+                                              });
+                                            },
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(left: 4),
+                                              child: Icon(
+                                                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                                color: isFav ? Colors.redAccent : AppColors.textMuted,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 6),
+
+                                      // Rating Stars + Review Count
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.star_rounded, color: AppColors.warmAmber, size: 16),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            m.rating.toString(),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                              color: AppColors.warmDarkBrown,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Flexible(
+                                            child: Text(
+                                              '(${m.reviewCount} Reviews)',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: AppColors.textMuted,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+
+                                      // Price / Day Text
                                       Text(
-                                        'Seller: ${p.sellerName} • ${p.location}',
-                                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                        '${Formatters.currency(m.rentalPricePerDay)}/day',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.success,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      '${Formatters.currency(p.price)}/${p.unit}',
-                                      style: const TextStyle(
-                                        color: AppColors.primaryGreen,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const Text(
-                                      'View',
-                                      style: TextStyle(color: AppColors.accentGold, fontSize: 12, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
                                 ),
                               ],
                             ),
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Text('Error loading products: $err'),
+                error: (err, _) => Text('Error: $err'),
               ),
             ),
-            const SizedBox(height: 30),
+
+            const SizedBox(height: 16),
+
+            // 5. Bottom "List your machine" Warm Golden Banner
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF4E6), // Soft Warm Cream
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE6DAC3), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    children: [
+                      // Left Content Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'List your machine',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Color(0xFF1E3A24), // Dark Forest Green
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Earn more by renting your machines and help other farmers.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF5A4D3E),
+                                height: 1.25,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            GestureDetector(
+                              onTap: () => context.push('/machinery/add'),
+                              child: Container(
+                                padding: const EdgeInsets.fromLTRB(16, 7, 7, 7),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF163820), // Dark Forest Green Pill
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(color: const Color(0xFFC5A059), width: 1), // Gold Border
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF163820).withValues(alpha: 0.3),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'List Now',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    CircleAvatar(
+                                      radius: 11,
+                                      backgroundColor: Color(0xFFC5A059), // Gold Arrow Circle
+                                      child: Icon(Icons.arrow_forward_rounded, color: Color(0xFF163820), size: 13),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Right Side Clipped Tractor & Farm Artwork
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: SizedBox(
+                          width: 120,
+                          height: 110,
+                          child: Image.asset(
+                            'assets/images/farm_hero_banner_illustration.jpg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: const Color(0xFFE8F5E9),
+                              child: const Icon(Icons.agriculture_rounded, color: Color(0xFF163820), size: 48),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  }
+
+  // --- Clean Category Card Builder ---
+  Widget _buildActionCategoryCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Color bgColor,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.warmBorder, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: bgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 21),
+            ),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  color: AppColors.warmDarkBrown,
+                  height: 1.15,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildQuickCard(
-    BuildContext context, {
+  // --- Interactive Bottom Sheet for Role Picker ---
+  void _showRoleSelectionBottomSheet(BuildContext context, WidgetRef ref, User? user) {
+    final currentRole = user?.role ?? 'Farmer';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Select Your Profile Role',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.warmDarkBrown,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Switch your role to access tailored features & tools',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              _buildRoleOptionTile(
+                context: ctx,
+                title: 'Farmer',
+                subtitle: 'Rent machines, hire skilled workers & buy/sell produce',
+                icon: Icons.agriculture_rounded,
+                iconColor: const Color(0xFF2E7D32),
+                iconBg: const Color(0xFFE8F5E9),
+                isSelected: currentRole.toLowerCase() == 'farmer',
+                onSelect: () {
+                  ref.read(authProvider.notifier).switchRole('Farmer');
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Switched role to Farmer')),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildRoleOptionTile(
+                context: ctx,
+                title: 'Equipment Owner',
+                subtitle: 'List tractors, harvesters & earn rental income',
+                icon: Icons.precision_manufacturing_rounded,
+                iconColor: const Color(0xFFE65100),
+                iconBg: const Color(0xFFFFF3E0),
+                isSelected: currentRole.toLowerCase() == 'equipment owner',
+                onSelect: () {
+                  ref.read(authProvider.notifier).switchRole('Equipment Owner');
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Switched role to Equipment Owner')),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildRoleOptionTile(
+                context: ctx,
+                title: 'Farm Worker / Driver',
+                subtitle: 'Offer daily wage labor & driver services nearby',
+                icon: Icons.groups_rounded,
+                iconColor: const Color(0xFF1565C0),
+                iconBg: const Color(0xFFE3F2FD),
+                isSelected: currentRole.toLowerCase() == 'farm worker / driver',
+                onSelect: () {
+                  ref.read(authProvider.notifier).switchRole('Farm Worker / Driver');
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Switched role to Farm Worker / Driver')),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRoleOptionTile({
+    required BuildContext context,
     required String title,
     required String subtitle,
     required IconData icon,
-    required Color color,
     required Color iconColor,
-    required VoidCallback onTap,
+    required Color iconBg,
+    required bool isSelected,
+    required VoidCallback onSelect,
   }) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFFFFF8E1) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+        border: Border.all(
+          color: isSelected ? AppColors.warmAmber : AppColors.warmBorder,
+          width: isSelected ? 2.0 : 1.0,
         ),
+      ),
+      child: ListTile(
+        onTap: onSelect,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: iconBg,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor, size: 22),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.warmDarkBrown),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
+        trailing: isSelected
+            ? const Icon(Icons.check_circle_rounded, color: AppColors.warmAmber, size: 22)
+            : const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
       ),
     );
   }
 
-  Widget _buildSectionHeader({required String title, required VoidCallback onSeeAll}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          TextButton(
-            onPressed: onSeeAll,
-            child: const Text(
-              'See All >',
-              style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
+  // --- Interactive Bottom Sheet for Location Picker ---
+  void _showLocationSelectionBottomSheet(BuildContext context, WidgetRef ref, User? user) {
+    final currentLocation = user?.locationName ?? 'Shivamogga, KA';
+
+    final locations = [
+      'Shivamogga, KA',
+      'Davanagere, KA',
+      'Chikkamagaluru, KA',
+      'Hassan, KA',
+      'Tumakuru, KA',
+      'Mandya, KA',
+      'Mysuru, KA',
+      'Hubballi-Dharwad, KA',
+      'Belagavi, KA',
+      'Udupi, KA',
+      'Mangaluru, KA',
+      'Bengaluru Rural, KA',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (_, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Select Location',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.warmDarkBrown,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Choose your area to discover nearby machines & workers',
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // GPS Location Button
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: ListTile(
+                      onTap: () {
+                        if (user != null) {
+                          ref.read(authProvider.notifier).updateProfile(
+                                user.copyWith(locationName: 'Shivamogga, KA'),
+                              );
+                        }
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Updated location to Current Location (Shivamogga, KA)')),
+                        );
+                      },
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFF2E7D32),
+                        radius: 16,
+                        child: Icon(Icons.my_location_rounded, color: Colors.white, size: 16),
+                      ),
+                      title: const Text(
+                        'Use Current Location (GPS)',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF2E7D32)),
+                      ),
+                      subtitle: const Text('Auto-detect your location', style: TextStyle(fontSize: 11)),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  const Text(
+                    'Popular Districts & Areas',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.warmDarkBrown),
+                  ),
+                  const SizedBox(height: 8),
+
+                  Expanded(
+                    child: ListView.separated(
+                      controller: scrollController,
+                      itemCount: locations.length,
+                      separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.warmBorder),
+                      itemBuilder: (context, idx) {
+                        final loc = locations[idx];
+                        final isSelected = loc == currentLocation;
+
+                        return ListTile(
+                          onTap: () {
+                            if (user != null) {
+                              ref.read(authProvider.notifier).updateProfile(
+                                    user.copyWith(locationName: loc),
+                                  );
+                            }
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Location updated to $loc')),
+                            );
+                          },
+                          leading: Icon(
+                            Icons.location_city_rounded,
+                            color: isSelected ? AppColors.primaryGreen : AppColors.textMuted,
+                            size: 20,
+                          ),
+                          title: Text(
+                            loc,
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? AppColors.warmDarkBrown : AppColors.textSecondary,
+                            ),
+                          ),
+                          trailing: isSelected
+                              ? const Icon(Icons.check_circle_rounded, color: AppColors.primaryGreen, size: 20)
+                              : null,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

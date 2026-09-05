@@ -10,7 +10,7 @@ class SampleData {
   static const User currentUser = User(
     id: 'user_1',
     name: 'bharath poojary',
-    phone: '+91 9876543210',
+    phone: '+91 8904089051',
     email: 'bharath.poojary@krushimithra.com',
     role: 'Farmer',
     profilePhoto: 'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=400',
@@ -27,7 +27,7 @@ class SampleData {
       category: 'Tractors',
       ownerId: 'owner_101',
       ownerName: 'Suresh Patil',
-      ownerPhone: '+91 9845012345',
+      ownerPhone: '+91 8310856407',
       images: [
         'assets/images/mahindra_575_di.jpg',
       ],
@@ -52,7 +52,7 @@ class SampleData {
       category: 'Harvesters',
       ownerId: 'owner_102',
       ownerName: 'Venkatesh Rao',
-      ownerPhone: '+91 9741098765',
+      ownerPhone: '+91 7204967137',
       images: [
         'assets/images/kubota_combine_harvester.jpg',
       ],
@@ -77,7 +77,7 @@ class SampleData {
       category: 'Power Tillers',
       ownerId: 'owner_103',
       ownerName: 'Manjunatha K.',
-      ownerPhone: '+91 9632011223',
+      ownerPhone: '+91 8310080549',
       images: [
         'https://images.unsplash.com/photo-1589923188900-85dae523342b?w=800',
       ],
@@ -101,7 +101,7 @@ class SampleData {
       category: 'Bush Cutters',
       ownerId: 'owner_104',
       ownerName: 'Ganesh Bhat',
-      ownerPhone: '+91 9448033445',
+      ownerPhone: '+91 9945583380',
       images: [
         'https://images.unsplash.com/photo-1617575521317-864339cd58a1?w=800',
       ],
@@ -119,13 +119,38 @@ class SampleData {
         'Blade Type': '3-Tough Alloy Blade',
       },
     ),
+    Machine(
+      id: 'm_5',
+      name: 'Borewell Rig Machine',
+      category: 'Borewell Machines',
+      ownerId: 'owner_105',
+      ownerName: 'Ramesh G.',
+      ownerPhone: '+91 9113664733',
+      images: [
+        'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=800',
+      ],
+      description: 'Heavy duty high-pressure hydraulic borewell drilling rig truck for agricultural water wells, casing pipe installation, and deep groundwater drilling.',
+      rentalPricePerDay: 1800.0,
+      location: 'Davanagere, KA',
+      latitude: 14.4673,
+      longitude: 75.9241,
+      isAvailable: true,
+      rating: 4.7,
+      reviewCount: 12,
+      isNew: true,
+      specs: {
+        'Drilling Depth': 'Up to 1000 ft',
+        'Rig Type': 'Hydraulic Truck Rig',
+        'Casing Pipe Diameter': '6.5 inches',
+      },
+    ),
   ];
 
   static final List<Worker> initialWorkers = [
     Worker(
       id: 'w_1',
       name: 'Basavarajappa M.',
-      phone: '+91 9880012399',
+      phone: '+91 7019064948',
       skills: ['Tractor Driver', 'Harvester Operator', 'Paddy Planter/Harvester'],
       experienceYears: 12,
       location: 'Shivamogga, KA',
@@ -142,7 +167,7 @@ class SampleData {
     Worker(
       id: 'w_2',
       name: 'Subramanya Bhat',
-      phone: '+91 9901044556',
+      phone: '+91 8217353139',
       skills: ['Arecanut Tree Climber/Harvester', 'Bush & Grass Cutting Specialist'],
       experienceYears: 8,
       location: 'Chikamagaluru, KA',
@@ -159,7 +184,7 @@ class SampleData {
     Worker(
       id: 'w_3',
       name: 'Kumar & Team (4 Workers)',
-      phone: '+91 9481077889',
+      phone: '+91 9019439854',
       skills: ['Paddy Planter/Harvester', 'General Farm Laborer'],
       experienceYears: 10,
       location: 'Mandya, KA',
@@ -183,7 +208,7 @@ class SampleData {
       category: 'Arecanut',
       sellerId: 'user_201',
       sellerName: 'Narayana Hegde',
-      sellerPhone: '+91 9449011122',
+      sellerPhone: '+91 7892570830',
       images: [
         'https://images.unsplash.com/photo-1546430498-05c7b929fb30?w=800',
       ],
@@ -201,7 +226,7 @@ class SampleData {
       category: 'Pepper',
       sellerId: 'user_202',
       sellerName: 'Annappa Gowda',
-      sellerPhone: '+91 9844033344',
+      sellerPhone: '+91 18296315071',
       images: [
         'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800',
       ],
@@ -219,7 +244,7 @@ class SampleData {
       category: 'Coffee',
       sellerId: 'user_203',
       sellerName: 'Estate Farmer Roy',
-      sellerPhone: '+91 9731055566',
+      sellerPhone: '+91 9900778825',
       images: [
         'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800',
       ],

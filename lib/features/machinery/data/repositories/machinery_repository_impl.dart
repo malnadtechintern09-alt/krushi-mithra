@@ -1,9 +1,9 @@
 import '../../domain/entities/machine.dart';
 import '../../domain/repositories/machinery_repository.dart';
-import '../../../../core/database/sample_data.dart';
+import '../../../../core/services/api_service.dart';
 
 class MachineryRepositoryImpl implements MachineryRepository {
-  final List<Machine> _machines = List.from(SampleData.initialMachines);
+  List<Machine> _machines = [];
 
   @override
   Future<List<Machine>> getMachines({
@@ -11,7 +11,7 @@ class MachineryRepositoryImpl implements MachineryRepository {
     String? location,
     String? searchQuery,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    _machines = await ApiService().fetchMachines();
     var results = List<Machine>.from(_machines);
 
     if (category != null && category != 'All') {
@@ -36,7 +36,9 @@ class MachineryRepositoryImpl implements MachineryRepository {
 
   @override
   Future<Machine?> getMachineById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    if (_machines.isEmpty) {
+      _machines = await ApiService().fetchMachines();
+    }
     try {
       return _machines.firstWhere((m) => m.id == id);
     } catch (_) {
@@ -46,14 +48,12 @@ class MachineryRepositoryImpl implements MachineryRepository {
 
   @override
   Future<Machine> addMachine(Machine machine) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     _machines.insert(0, machine);
     return machine;
   }
 
   @override
   Future<Machine> updateMachine(Machine machine) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     final index = _machines.indexWhere((m) => m.id == machine.id);
     if (index != -1) {
       _machines[index] = machine;
@@ -63,7 +63,6 @@ class MachineryRepositoryImpl implements MachineryRepository {
 
   @override
   Future<void> deleteMachine(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
     _machines.removeWhere((m) => m.id == id);
   }
 }

@@ -8,6 +8,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/url_launcher_helper.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../providers/marketplace_provider.dart';
 
 class MarketplaceListScreen extends ConsumerWidget {
@@ -125,17 +126,11 @@ class MarketplaceListScreen extends ConsumerWidget {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  p.images.first,
+                                child: AppImage(
+                                  url: p.images.first,
                                   width: 100,
                                   height: 100,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    width: 100,
-                                    height: 100,
-                                    color: AppColors.chipBackground,
-                                    child: const Icon(Icons.storefront, size: 40, color: AppColors.primaryGreen),
-                                  ),
+                                  placeholderIcon: Icons.storefront,
                                 ),
                               ),
                               const SizedBox(width: 14),

@@ -48,7 +48,25 @@ class _BookMachineScreenState extends ConsumerState<BookMachineScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
         title: const Text('Confirm Machine Rental'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: Colors.white),
+            tooltip: 'Return to Home',
+            onPressed: () => context.go('/'),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: machineAsync.when(
         data: (m) {

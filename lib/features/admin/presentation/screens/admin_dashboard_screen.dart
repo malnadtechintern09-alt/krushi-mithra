@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../../../machinery/presentation/providers/machinery_provider.dart';
 import '../../../workers/presentation/providers/worker_provider.dart';
 import '../../../marketplace/presentation/providers/marketplace_provider.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
+
+  Future<void> _openWebAdminPanel() async {
+    final Uri url = Uri.parse('http://localhost:8080/admin/');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,6 +34,54 @@ class AdminDashboardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // WEB ADMIN PANEL LAUNCH BANNER
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primaryGreenDark, AppColors.primaryGreen],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.web, color: Colors.white, size: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        'Full Web Admin Console',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Access 20 management modules, real-time machine prices, availability controls, and mobile content manager at http://localhost:8080/admin/',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: _openWebAdminPanel,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.warning,
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text('Open Web Admin Panel (localhost:8080)'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
             const Text(
               'Platform Overview',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
@@ -40,8 +97,8 @@ class AdminDashboardScreen extends ConsumerWidget {
               crossAxisSpacing: 12,
               childAspectRatio: 1.5,
               children: [
-                _buildStatCard('Active Farmers', '1,420+', Icons.people_alt, AppColors.primaryGreen),
-                _buildStatCard('Listed Machines', '${machinesAsync.value?.length ?? 4}', Icons.agriculture, AppColors.warning),
+                _buildStatCard('Active Farmers', '12,450+', Icons.people_alt, AppColors.primaryGreen),
+                _buildStatCard('Listed Machines', '${machinesAsync.value?.length ?? 5}', Icons.agriculture, AppColors.warning),
                 _buildStatCard('Verified Workers', '${workersAsync.value?.length ?? 3}', Icons.engineering, AppColors.info),
                 _buildStatCard('Market Products', '${productsAsync.value?.length ?? 6}', Icons.storefront, Colors.purple),
               ],
@@ -102,7 +159,14 @@ class AdminDashboardScreen extends ConsumerWidget {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
-                        leading: Image.network(m.images.first, width: 50, height: 50, fit: BoxFit.cover),
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: AppImage(
+                            url: m.images.first,
+                            width: 50,
+                            height: 50,
+                          ),
+                        ),
                         title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         subtitle: Text('Owner: ${m.ownerName} • ${m.location}'),
                         trailing: const Icon(Icons.check_circle_outline_rounded, color: AppColors.success),

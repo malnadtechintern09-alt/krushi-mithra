@@ -1,9 +1,9 @@
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/marketplace_repository.dart';
-import '../../../../core/database/sample_data.dart';
+import '../../../../core/services/api_service.dart';
 
 class MarketplaceRepositoryImpl implements MarketplaceRepository {
-  final List<Product> _products = List.from(SampleData.initialProducts);
+  List<Product> _products = [];
 
   @override
   Future<List<Product>> getProducts({
@@ -12,7 +12,7 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
     String? searchQuery,
     String? location,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    _products = await ApiService().fetchMarketplaceProducts();
     var results = List<Product>.from(_products);
 
     if (isAgroStoreOnly != null) {
@@ -41,7 +41,9 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
 
   @override
   Future<Product?> getProductById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    if (_products.isEmpty) {
+      _products = await ApiService().fetchMarketplaceProducts();
+    }
     try {
       return _products.firstWhere((p) => p.id == id);
     } catch (_) {
@@ -51,14 +53,12 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
 
   @override
   Future<Product> addProduct(Product product) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     _products.insert(0, product);
     return product;
   }
 
   @override
   Future<Product> updateProduct(Product product) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     final index = _products.indexWhere((p) => p.id == product.id);
     if (index != -1) {
       _products[index] = product;
@@ -68,7 +68,6 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
 
   @override
   Future<void> deleteProduct(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
     _products.removeWhere((p) => p.id == id);
   }
 }

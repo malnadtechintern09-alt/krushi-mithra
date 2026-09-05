@@ -1,9 +1,9 @@
 import '../../domain/entities/worker.dart';
 import '../../domain/repositories/worker_repository.dart';
-import '../../../../core/database/sample_data.dart';
+import '../../../../core/services/api_service.dart';
 
 class WorkerRepositoryImpl implements WorkerRepository {
-  final List<Worker> _workers = List.from(SampleData.initialWorkers);
+  List<Worker> _workers = [];
 
   @override
   Future<List<Worker>> getWorkers({
@@ -11,7 +11,7 @@ class WorkerRepositoryImpl implements WorkerRepository {
     String? location,
     String? searchQuery,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    _workers = await ApiService().fetchWorkers();
     var results = List<Worker>.from(_workers);
 
     if (skill != null && skill != 'All') {
@@ -36,7 +36,9 @@ class WorkerRepositoryImpl implements WorkerRepository {
 
   @override
   Future<Worker?> getWorkerById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    if (_workers.isEmpty) {
+      _workers = await ApiService().fetchWorkers();
+    }
     try {
       return _workers.firstWhere((w) => w.id == id);
     } catch (_) {
@@ -46,14 +48,12 @@ class WorkerRepositoryImpl implements WorkerRepository {
 
   @override
   Future<Worker> registerWorker(Worker worker) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     _workers.insert(0, worker);
     return worker;
   }
 
   @override
   Future<Worker> updateWorker(Worker worker) async {
-    await Future.delayed(const Duration(milliseconds: 300));
     final index = _workers.indexWhere((w) => w.id == worker.id);
     if (index != -1) {
       _workers[index] = worker;

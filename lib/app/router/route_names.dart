@@ -22,4 +22,7 @@ class RouteNames {
   static const String myOrders = 'myOrders';
   static const String profile = 'profile';
   static const String admin = 'admin';
+
+  static const String joinProvider = 'joinProvider';
+  static const String myApplications = 'myApplications';
 }

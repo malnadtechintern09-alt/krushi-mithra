@@ -6,6 +6,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../providers/cart_provider.dart';
 
 class CartScreen extends ConsumerWidget {
@@ -17,6 +18,16 @@ class CartScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
         title: const Text('Shopping Cart'),
         actions: [
           if (cart.items.isNotEmpty)
@@ -25,6 +36,12 @@ class CartScreen extends ConsumerWidget {
               tooltip: 'Clear Cart',
               onPressed: () => ref.read(cartProvider.notifier).clearCart(),
             ),
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: Colors.white),
+            tooltip: 'Return to Home',
+            onPressed: () => context.go('/'),
+          ),
+          const SizedBox(width: 4),
         ],
       ),
       body: cart.items.isEmpty
@@ -51,11 +68,11 @@ class CartScreen extends ConsumerWidget {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  item.product.images.first,
+                                child: AppImage(
+                                  url: item.product.images.first,
                                   width: 65,
                                   height: 65,
-                                  fit: BoxFit.cover,
+                                  placeholderIcon: Icons.local_florist,
                                 ),
                               ),
                               const SizedBox(width: 12),

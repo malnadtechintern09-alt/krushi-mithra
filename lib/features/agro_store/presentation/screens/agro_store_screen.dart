@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/config/constants.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/rating_stars.dart';
 import '../../../../core/widgets/loading_indicator.dart';
@@ -146,14 +147,10 @@ class _AgroStoreScreenState extends ConsumerState<AgroStoreScreen> {
                             Expanded(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: Image.network(
-                                  p.images.first,
+                                child: AppImage(
+                                  url: p.images.first,
                                   width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: AppColors.chipBackground,
-                                    child: const Icon(Icons.local_florist, size: 40, color: AppColors.primaryGreen),
-                                  ),
+                                  placeholderIcon: Icons.local_florist,
                                 ),
                               ),
                             ),

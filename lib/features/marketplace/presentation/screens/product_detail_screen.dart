@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/url_launcher_helper.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/loading_indicator.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../providers/marketplace_provider.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
@@ -18,7 +20,27 @@ class ProductDetailScreen extends ConsumerWidget {
     final productAsync = ref.watch(productDetailProvider(productId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Produce Listing Details')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+        title: const Text('Produce Listing Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: Colors.white),
+            tooltip: 'Return to Home',
+            onPressed: () => context.go('/'),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
       body: productAsync.when(
         data: (p) {
           if (p == null) return const Center(child: Text('Product not found'));
@@ -27,16 +49,11 @@ class ProductDetailScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.network(
-                  p.images.first,
+                AppImage(
+                  url: p.images.first,
                   height: 220,
                   width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 220,
-                    color: AppColors.chipBackground,
-                    child: const Icon(Icons.storefront, size: 60, color: AppColors.primaryGreen),
-                  ),
+                  placeholderIcon: Icons.storefront,
                 ),
                 Padding(
                   padding: const EdgeInsets.all(20),

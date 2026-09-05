@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  // Warm Theme Colors (From UI Design)
+  static const Color warmBackground = Color(0xFFFAF7F2); // Warm Cream / Linen
+  static const Color warmDarkBrown = Color(0xFF3D2B1F);   // Dark Warm Brown Text & Headers
+  static const Color warmBannerBrown = Color(0xFF4A3525); // Dark Warm Brown Container
+  static const Color warmAmber = Color(0xFFF3BD36);       // Warm Amber Pill Fill
+  static const Color warmBorder = Color(0xFFEAE3D2);      // Subtle Card Border
+
   // Primary Palette
   static const Color primaryGreen = Color(0xFF1E5631); // Lush Emerald Green
   static const Color primaryGreenLight = Color(0xFF4C8C4A);
@@ -13,14 +20,14 @@ class AppColors {
   static const Color earthLight = Color(0xFF8D6E63);
 
   // Background & Surface
-  static const Color backgroundLight = Color(0xFFF6F8F5);
+  static const Color backgroundLight = Color(0xFFFAF7F2);
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color cardSurface = Color(0xFFFFFFFF);
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF1B2A1E);
-  static const Color textSecondary = Color(0xFF5A6B5C);
-  static const Color textMuted = Color(0xFF8C9A8E);
+  static const Color textPrimary = Color(0xFF3D2B1F);
+  static const Color textSecondary = Color(0xFF7A6652);
+  static const Color textMuted = Color(0xFF9A8673);
 
   // Status Colors
   static const Color success = Color(0xFF2E7D32);
@@ -29,7 +36,7 @@ class AppColors {
   static const Color info = Color(0xFF0288D1);
 
   // UI Accents
-  static const Color borderLight = Color(0xFFE2E8E4);
+  static const Color borderLight = Color(0xFFEAE3D2);
   static const Color chipBackground = Color(0xFFEEF4EF);
   static const Color whatsappGreen = Color(0xFF25D366);
 }

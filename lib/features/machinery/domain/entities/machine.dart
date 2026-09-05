@@ -15,6 +15,7 @@ class Machine {
   final double rating;
   final int reviewCount;
   final Map<String, String> specs;
+  final bool isNew;
 
   const Machine({
     required this.id,
@@ -33,6 +34,7 @@ class Machine {
     this.rating = 4.5,
     this.reviewCount = 0,
     this.specs = const {},
+    this.isNew = false,
   });
 
   Machine copyWith({
@@ -52,6 +54,7 @@ class Machine {
     double? rating,
     int? reviewCount,
     Map<String, String>? specs,
+    bool? isNew,
   }) {
     return Machine(
       id: id ?? this.id,
@@ -70,6 +73,7 @@ class Machine {
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,
       specs: specs ?? this.specs,
+      isNew: isNew ?? this.isNew,
     );
   }
 }

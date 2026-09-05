@@ -36,7 +36,27 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final user = ref.watch(authProvider).value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout & Order Placement')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+        title: const Text('Checkout & Order Placement'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: Colors.white),
+            tooltip: 'Return to Home',
+            onPressed: () => context.go('/'),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
