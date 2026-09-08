@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../app/theme/app_colors.dart';
@@ -59,6 +60,21 @@ class AppImage extends StatelessWidget {
       );
     }
 
+    // 3. Local File Path Image
+    if (cleanUrl.startsWith('/') || cleanUrl.contains(':\\') || cleanUrl.contains('/data/') || cleanUrl.startsWith('file://')) {
+      final path = cleanUrl.replaceFirst('file://', '');
+      final file = File(path);
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          width: width,
+          height: height,
+          fit: fit,
+          errorBuilder: (_, __, ___) => _buildFallback(),
+        );
+      }
+    }
+
     // 3. Network Image (HTTP / HTTPS)
     return Image.network(
       cleanUrl,
@@ -70,14 +86,26 @@ class AppImage extends StatelessWidget {
   }
 
   Widget _buildFallback() {
+    final isPerson = placeholderIcon == Icons.person ||
+        placeholderIcon == Icons.person_rounded ||
+        placeholderIcon == Icons.account_circle ||
+        placeholderIcon == Icons.badge ||
+        url.contains('photo-') ||
+        url.contains('profile') ||
+        url.contains('avatar') ||
+        url.contains('usr_') ||
+        url.contains('w_');
+
+    final iconToUse = isPerson ? Icons.person_rounded : placeholderIcon;
+
     return Container(
       width: width,
       height: height,
-      color: AppColors.chipBackground,
+      color: isPerson ? const Color(0xFFE8F5E9) : AppColors.chipBackground,
       child: Center(
         child: Icon(
-          placeholderIcon,
-          size: (height != null && height! < 60) ? 24 : 40,
+          iconToUse,
+          size: (height != null && height! < 60) ? (height! * 0.5) : 36,
           color: AppColors.primaryGreen,
         ),
       ),

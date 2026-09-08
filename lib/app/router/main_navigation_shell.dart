@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
 
-class MainNavigationShell extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/localization/language_provider.dart';
+import '../theme/app_colors.dart';
+
+class MainNavigationShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainNavigationShell({
@@ -11,7 +15,7 @@ class MainNavigationShell extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = navigationShell.currentIndex;
 
     return Scaffold(
@@ -66,7 +70,7 @@ class MainNavigationShell extends StatelessWidget {
                           currentIndex: currentIndex,
                           icon: Icons.home_outlined,
                           activeIcon: Icons.home_rounded,
-                          label: 'Home',
+                          label: ref.tr('home'),
                         ),
                       ),
 
@@ -78,7 +82,7 @@ class MainNavigationShell extends StatelessWidget {
                           currentIndex: currentIndex,
                           icon: Icons.agriculture_outlined,
                           activeIcon: Icons.agriculture_rounded,
-                          label: 'Machines',
+                          label: ref.tr('machines'),
                         ),
                       ),
 
@@ -93,7 +97,7 @@ class MainNavigationShell extends StatelessWidget {
                           currentIndex: currentIndex,
                           icon: Icons.groups_outlined,
                           activeIcon: Icons.groups_rounded,
-                          label: 'Workers',
+                          label: ref.tr('workers'),
                         ),
                       ),
 
@@ -105,7 +109,7 @@ class MainNavigationShell extends StatelessWidget {
                           currentIndex: currentIndex,
                           icon: Icons.receipt_long_outlined,
                           activeIcon: Icons.receipt_long_rounded,
-                          label: 'History',
+                          label: ref.tr('my_orders'),
                         ),
                       ),
 
@@ -186,8 +190,8 @@ class MainNavigationShell extends StatelessWidget {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-        padding: const EdgeInsets.symmetric(vertical: 3),
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF234B2C) : const Color(0xFF13321C),
           borderRadius: BorderRadius.circular(16),
@@ -206,23 +210,19 @@ class MainNavigationShell extends StatelessWidget {
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               isSelected ? activeIcon : icon,
               color: isSelected ? const Color(0xFFF3D577) : const Color(0xFFD5E0D8),
-              size: 19,
+              size: 20,
             ),
             const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? const Color(0xFFF3D577) : const Color(0xFFD5E0D8),
-                ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? const Color(0xFFF3D577) : const Color(0xFFD5E0D8),
               ),
             ),
             if (isSelected) ...[

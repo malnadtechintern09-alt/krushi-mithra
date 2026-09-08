@@ -10,6 +10,8 @@ import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../providers/marketplace_provider.dart';
+import '../../../../core/localization/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 
 class MarketplaceListScreen extends ConsumerWidget {
   const MarketplaceListScreen({super.key});
@@ -18,10 +20,11 @@ class MarketplaceListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(marketplaceFilterProvider);
     final productsAsync = ref.watch(marketplaceProductsProvider);
+    final selectedLang = ref.watch(languageProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Buy & Sell Farm Produce'),
+        title: Text(ref.tr('crop_marketplace')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_business_rounded),
@@ -109,98 +112,110 @@ class MarketplaceListScreen extends ConsumerWidget {
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: products.length,
-                  itemBuilder: (ctx, i) {
-                    final p = products[i];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () => context.push('/marketplace/${p.id}'),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: AppImage(
-                                  url: p.images.first,
-                                  width: 100,
-                                  height: 100,
-                                  placeholderIcon: Icons.storefront,
+                return RefreshIndicator(
+                  color: AppColors.primaryGreen,
+                  onRefresh: () async {
+                    ref.invalidate(marketplaceProductsProvider);
+                    await ref.read(marketplaceProductsProvider.future);
+                  },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: products.length,
+                    itemBuilder: (ctx, i) {
+                      final p = products[i];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => context.push('/marketplace/${p.id}'),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: AppImage(
+                                    url: p.images.first,
+                                    width: 100,
+                                    height: 100,
+                                    placeholderIcon: Icons.storefront,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.chipBackground,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        p.category,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.primaryGreen,
-                                          fontWeight: FontWeight.bold,
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.chipBackground,
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      p.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '📍 ${p.location} • Seller: ${p.sellerName}',
-                                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          '${Formatters.currency(p.price)} / ${p.unit}',
+                                        child: Text(
+                                          p.category,
                                           style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
                                             color: AppColors.primaryGreen,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        IconButton(
-                                          icon: const Icon(Icons.chat, color: AppColors.whatsappGreen),
-                                          tooltip: 'WhatsApp Seller',
-                                          onPressed: () {
-                                            UrlLauncherHelper.openWhatsApp(
-                                              phoneNumber: p.sellerPhone,
-                                              message: 'Namaste ${p.sellerName}, I am interested in buying ${p.title} listed on Krushi Mithra.',
-                                            );
-                                          },
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        p.title,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
                                         ),
-                                      ],
-                                    ),
-                                  ],
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '📍 ${p.location} • Seller: ${p.sellerName}',
+                                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            '${Formatters.currency(p.price)} / ${p.unit}',
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primaryGreen,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.chat, color: AppColors.whatsappGreen),
+                                            tooltip: 'WhatsApp Seller',
+                                            onPressed: () {
+                                              UrlLauncherHelper.showWhatsAppConfirmationBottomSheet(
+                                                context: context,
+                                                phoneNumber: p.sellerPhone,
+                                                recipientName: p.sellerName,
+                                                category: 'Produce Listing',
+                                                itemTitle: p.title,
+                                                itemId: p.id,
+                                                itemType: 'marketplace',
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 );
               },
               loading: () => const LoadingIndicator(message: 'Loading marketplace listings...'),

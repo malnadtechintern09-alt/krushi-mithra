@@ -103,9 +103,9 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
         'token': 'krushi_admin_jwt_token_secret_9988',
         'user': {
           'id': 'adm_1',
-          'name': 'Super Administrator',
+          'name': 'Bharath Admin',
           'email': email,
-          'role': 'Super Admin',
+          'role': 'Super Administrator',
         }
       });
     } else {
@@ -177,7 +177,10 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
   if (path == '/provider/my-applications' && method == 'GET') {
     final userId = request.uri.queryParameters['user_id'] ?? 'usr_101';
     final apps = db.getList('provider_applications');
-    final userApps = apps.where((a) => a is Map && a['userId'] == userId).toList();
+    var userApps = apps.where((a) => a is Map && (a['userId'] == userId || a['userId'] == 'user_1' || a['userId'] == 'usr_101' || a['userId'] == 'user_101')).toList();
+    if (userApps.isEmpty && apps.isNotEmpty) {
+      userApps = List.from(apps);
+    }
     _sendJson(request, userApps);
     return;
   }
@@ -387,14 +390,34 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
     }
     if (method == 'POST') {
       body['id'] = 'm_${DateTime.now().millisecondsSinceEpoch}';
-      body['status'] ??= 'Approved';
-      body['verificationStatus'] ??= 'Verified';
-      body['isAvailable'] = body['isAvailable'] ?? true;
-      body['availabilityStatus'] = body['isAvailable'] ? 'Available' : 'Unavailable';
+      body['status'] ??= 'Pending';
+      body['verificationStatus'] ??= 'Pending Review';
+      body['isAvailable'] = body['isAvailable'] ?? false;
+      body['availabilityStatus'] = body['isAvailable'] ? 'Available' : 'Pending Approval';
       body['rating'] ??= 5.0;
       body['reviewCount'] ??= 0;
       db.addItem('machines', body);
-      _logActivity(db, 'Added Machine', 'Machines', 'Added new machine ${body['name']} (Price: ₹${body['rentalPricePerDay']})');
+
+      final appNum = DateTime.now().millisecondsSinceEpoch.toString().substring(7);
+      final providerApp = {
+        'id': 'app_${DateTime.now().millisecondsSinceEpoch}',
+        'applicationId': 'KM-APP-$appNum',
+        'userId': body['ownerId'] ?? 'usr_101',
+        'userName': body['ownerName'] ?? 'Farmer Owner',
+        'userPhone': body['ownerPhone'] ?? '+91 9876543210',
+        'serviceType': 'Rent My Machine',
+        'machineName': body['name'] ?? 'Agricultural Machine',
+        'category': body['category'] ?? 'Tractors',
+        'userLocation': body['location'] ?? 'Shivamogga, KA',
+        'rentalPricePerDay': body['rentalPricePerDay'] ?? 2200,
+        'description': body['description'] ?? '',
+        'images': body['images'] ?? [],
+        'status': 'PENDING',
+        'submittedAt': DateTime.now().toString().split('.')[0],
+      };
+      db.addItem('provider_applications', providerApp);
+
+      _logActivity(db, 'Submitted Machine Listing for Approval', 'Provider Approvals', 'Owner ${body['ownerName']} submitted machine ${body['name']} (App ID: ${providerApp['applicationId']})');
       _sendJson(request, body, status: HttpStatus.created);
       return;
     }
@@ -448,12 +471,30 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
     }
     if (method == 'POST') {
       body['id'] = 'w_${DateTime.now().millisecondsSinceEpoch}';
-      body['status'] ??= 'Active';
-      body['isVerified'] ??= true;
-      body['isAvailable'] ??= true;
-      body['availabilityStatus'] = body['isAvailable'] ? 'Available' : 'Unavailable';
+      body['status'] ??= 'Pending';
+      body['isVerified'] ??= false;
+      body['isAvailable'] = body['isAvailable'] ?? false;
+      body['availabilityStatus'] = body['isAvailable'] ? 'Available' : 'Pending Approval';
       db.addItem('workers', body);
-      _logActivity(db, 'Added Worker', 'Workers & Drivers', 'Registered worker ${body['name']} (${body['category']})');
+
+      final appNum = DateTime.now().millisecondsSinceEpoch.toString().substring(7);
+      final providerApp = {
+        'id': 'app_${DateTime.now().millisecondsSinceEpoch}',
+        'applicationId': 'KM-APP-$appNum',
+        'userId': body['userId'] ?? 'usr_101',
+        'userName': body['name'] ?? 'Farm Worker',
+        'userPhone': body['phone'] ?? '+91 9876543210',
+        'serviceType': 'Worker / Operator Registration',
+        'category': (body['skills'] != null && (body['skills'] as List).isNotEmpty) ? body['skills'][0] : 'Driver',
+        'userLocation': body['location'] ?? 'Shivamogga, KA',
+        'rentalPricePerDay': body['dailyRate'] ?? 900,
+        'description': body['bio'] ?? '',
+        'status': 'PENDING',
+        'submittedAt': DateTime.now().toString().split('.')[0],
+      };
+      db.addItem('provider_applications', providerApp);
+
+      _logActivity(db, 'Submitted Worker Registration for Approval', 'Provider Approvals', 'Worker ${body['name']} submitted application (App ID: ${providerApp['applicationId']})');
       _sendJson(request, body, status: HttpStatus.created);
       return;
     }
@@ -462,14 +503,22 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
   if (path.startsWith('/workers/')) {
     final id = path.replaceFirst('/workers/', '');
     if (method == 'PUT') {
-      db.updateItem('workers', 'id', id, body);
-      _logActivity(db, 'Updated Worker', 'Workers & Drivers', 'Updated worker $id');
-      _sendJson(request, db.getItem('workers', 'id', id)!);
+      final updated = db.updateItem('workers', 'id', id, body);
+      if (updated) {
+        _logActivity(db, 'Updated Worker', 'Workers & Drivers', 'Updated worker $id');
+        _sendJson(request, db.getItem('workers', 'id', id)!);
+      } else {
+        _sendJson(request, {'error': 'Worker not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
     if (method == 'DELETE') {
-      db.deleteItem('workers', 'id', id);
-      _sendJson(request, {'success': true});
+      final deleted = db.deleteItem('workers', 'id', id);
+      if (deleted) {
+        _sendJson(request, {'success': true});
+      } else {
+        _sendJson(request, {'error': 'Worker not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
   }
@@ -494,9 +543,13 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
   if (path.startsWith('/bookings/')) {
     final id = path.replaceFirst('/bookings/', '');
     if (method == 'PUT') {
-      db.updateItem('bookings', 'id', id, body);
-      _logActivity(db, 'Updated Booking', 'Bookings', 'Updated booking status for $id to ${body['bookingStatus']}');
-      _sendJson(request, db.getItem('bookings', 'id', id)!);
+      final updated = db.updateItem('bookings', 'id', id, body);
+      if (updated) {
+        _logActivity(db, 'Updated Booking', 'Bookings', 'Updated booking status for $id to ${body['bookingStatus']}');
+        _sendJson(request, db.getItem('bookings', 'id', id)!);
+      } else {
+        _sendJson(request, {'error': 'Booking not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
   }
@@ -520,13 +573,21 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
   if (path.startsWith('/marketplace/')) {
     final id = path.replaceFirst('/marketplace/', '');
     if (method == 'PUT') {
-      db.updateItem('marketplace_products', 'id', id, body);
-      _sendJson(request, db.getItem('marketplace_products', 'id', id)!);
+      final updated = db.updateItem('marketplace_products', 'id', id, body);
+      if (updated) {
+        _sendJson(request, db.getItem('marketplace_products', 'id', id)!);
+      } else {
+        _sendJson(request, {'error': 'Product not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
     if (method == 'DELETE') {
-      db.deleteItem('marketplace_products', 'id', id);
-      _sendJson(request, {'success': true});
+      final deleted = db.deleteItem('marketplace_products', 'id', id);
+      if (deleted) {
+        _sendJson(request, {'success': true});
+      } else {
+        _sendJson(request, {'error': 'Product not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
   }
@@ -550,13 +611,21 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
   if (path.startsWith('/store/')) {
     final id = path.replaceFirst('/store/', '');
     if (method == 'PUT') {
-      db.updateItem('store_products', 'id', id, body);
-      _sendJson(request, db.getItem('store_products', 'id', id)!);
+      final updated = db.updateItem('store_products', 'id', id, body);
+      if (updated) {
+        _sendJson(request, db.getItem('store_products', 'id', id)!);
+      } else {
+        _sendJson(request, {'error': 'Store item not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
     if (method == 'DELETE') {
-      db.deleteItem('store_products', 'id', id);
-      _sendJson(request, {'success': true});
+      final deleted = db.deleteItem('store_products', 'id', id);
+      if (deleted) {
+        _sendJson(request, {'success': true});
+      } else {
+        _sendJson(request, {'error': 'Store item not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
   }
@@ -607,6 +676,36 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
     }
   }
 
+  if (path.startsWith('/notifications/')) {
+    final remaining = path.replaceFirst('/notifications/', '');
+    if (remaining.contains('/resend')) {
+      final id = remaining.replaceFirst('/resend', '');
+      final notif = db.getItem('notifications', 'id', id);
+      if (notif != null) {
+        notif['status'] = 'Sent';
+        notif['sentAt'] = DateTime.now().toString().split('.')[0];
+        db.save();
+        _logActivity(db, 'Resent Push Notification', 'Notifications', 'Resent broadcast "${notif['title']}"');
+        _sendJson(request, notif);
+      } else {
+        _sendJson(request, {'error': 'Notification not found'}, status: HttpStatus.notFound);
+      }
+      return;
+    }
+
+    final id = remaining;
+    if (method == 'DELETE') {
+      final deleted = db.deleteItem('notifications', 'id', id);
+      if (deleted) {
+        _logActivity(db, 'Deleted Notification', 'Notifications', 'Deleted notification broadcast ID: $id');
+        _sendJson(request, {'success': true});
+      } else {
+        _sendJson(request, {'error': 'Notification not found'}, status: HttpStatus.notFound);
+      }
+      return;
+    }
+  }
+
   // Banners
   if (path == '/banners') {
     if (method == 'GET') {
@@ -626,13 +725,21 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
   if (path.startsWith('/banners/')) {
     final id = path.replaceFirst('/banners/', '');
     if (method == 'PUT') {
-      db.updateItem('banners', 'id', id, body);
-      _sendJson(request, db.getItem('banners', 'id', id)!);
+      final updated = db.updateItem('banners', 'id', id, body);
+      if (updated) {
+        _sendJson(request, db.getItem('banners', 'id', id)!);
+      } else {
+        _sendJson(request, {'error': 'Banner not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
     if (method == 'DELETE') {
-      db.deleteItem('banners', 'id', id);
-      _sendJson(request, {'success': true});
+      final deleted = db.deleteItem('banners', 'id', id);
+      if (deleted) {
+        _sendJson(request, {'success': true});
+      } else {
+        _sendJson(request, {'error': 'Banner not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
   }
@@ -707,6 +814,39 @@ Future<void> _handleApi(HttpRequest request, String path, DatabaseManager db) as
   if (path == '/admin-users') {
     if (method == 'GET') {
       _sendJson(request, db.getList('admin_users'));
+      return;
+    }
+    if (method == 'POST') {
+      body['id'] = 'adm_${DateTime.now().millisecondsSinceEpoch}';
+      body['status'] ??= 'Active';
+      body['lastLogin'] ??= DateTime.now().toString().split('.')[0];
+      db.addItem('admin_users', body);
+      _logActivity(db, 'Created Admin User', 'Admin Users', 'Added admin user ${body['name']} (${body['role']})');
+      _sendJson(request, body, status: HttpStatus.created);
+      return;
+    }
+  }
+
+  if (path.startsWith('/admin-users/')) {
+    final id = path.replaceFirst('/admin-users/', '');
+    if (method == 'PUT') {
+      final updated = db.updateItem('admin_users', 'id', id, body);
+      if (updated) {
+        _logActivity(db, 'Updated Admin User', 'Admin Users', 'Updated admin user ID: $id');
+        _sendJson(request, db.getItem('admin_users', 'id', id)!);
+      } else {
+        _sendJson(request, {'error': 'Admin user not found'}, status: HttpStatus.notFound);
+      }
+      return;
+    }
+    if (method == 'DELETE') {
+      final deleted = db.deleteItem('admin_users', 'id', id);
+      if (deleted) {
+        _logActivity(db, 'Deleted Admin User', 'Admin Users', 'Deleted admin user ID: $id');
+        _sendJson(request, {'success': true});
+      } else {
+        _sendJson(request, {'error': 'Admin user not found'}, status: HttpStatus.notFound);
+      }
       return;
     }
   }

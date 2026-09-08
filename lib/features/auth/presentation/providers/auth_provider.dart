@@ -30,6 +30,36 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     }
   }
 
+  Future<void> login(String phone, String password) async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await ref.read(authRepositoryProvider).login(phone, password);
+      state = AsyncValue.data(user);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> register(User user, String password) async {
+    state = const AsyncValue.loading();
+    try {
+      final newUser = await ref.read(authRepositoryProvider).register(user, password);
+      state = AsyncValue.data(newUser);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> logout() async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(authRepositoryProvider).logout();
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
   Future<void> updateProfile(User updatedUser) async {
     try {
       final user = await ref.read(authRepositoryProvider).updateProfile(updatedUser);

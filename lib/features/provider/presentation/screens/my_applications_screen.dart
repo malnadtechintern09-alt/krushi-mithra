@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../app/router/route_names.dart';
@@ -159,7 +160,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                             const SizedBox(height: 24),
                             ElevatedButton.icon(
                               onPressed: () {
-                                Navigator.pushNamed(context, RouteNames.joinProvider);
+                                context.push('/provider/join');
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryGreen,
@@ -303,7 +304,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                                       width: double.infinity,
                                       child: OutlinedButton.icon(
                                         onPressed: () {
-                                          Navigator.pushNamed(context, RouteNames.joinProvider);
+                                          context.push('/provider/join');
                                         },
                                         icon: const Icon(Icons.edit, size: 16),
                                         label: const Text('Edit & Resubmit Application'),
@@ -345,7 +346,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                     ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Navigator.pushNamed(context, RouteNames.joinProvider);
+          context.push('/provider/join');
         },
         backgroundColor: AppColors.primaryGreen,
         icon: const Icon(Icons.add, color: Colors.white),

@@ -49,6 +49,30 @@ class MachineryRepositoryImpl implements MachineryRepository {
   @override
   Future<Machine> addMachine(Machine machine) async {
     _machines.insert(0, machine);
+
+    try {
+      final machineMap = {
+        'id': machine.id,
+        'name': machine.name,
+        'category': machine.category,
+        'ownerId': machine.ownerId,
+        'ownerName': machine.ownerName,
+        'ownerPhone': machine.ownerPhone,
+        'images': machine.images,
+        'description': machine.description,
+        'rentalPricePerDay': machine.rentalPricePerDay,
+        'location': machine.location,
+        'latitude': machine.latitude,
+        'longitude': machine.longitude,
+        'rating': machine.rating,
+        'isNew': machine.isNew,
+        'status': 'Pending',
+        'isAvailable': false,
+        'availabilityStatus': 'Pending Approval',
+      };
+      await ApiService().submitMachine(machineMap);
+    } catch (_) {}
+
     return machine;
   }
 

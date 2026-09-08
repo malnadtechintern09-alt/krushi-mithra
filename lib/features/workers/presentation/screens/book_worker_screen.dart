@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/loading_indicator.dart';
@@ -82,9 +83,14 @@ class _BookWorkerScreenState extends ConsumerState<BookWorkerScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundImage: NetworkImage(w.profilePhoto),
+                        ClipOval(
+                          child: AppImage(
+                            url: w.profilePhoto,
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                            placeholderIcon: Icons.person_rounded,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(

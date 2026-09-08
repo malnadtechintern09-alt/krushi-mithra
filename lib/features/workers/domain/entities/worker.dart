@@ -9,6 +9,7 @@ class Worker {
   final double longitude;
   final double dailyRate;
   final bool isAvailable;
+  final String availabilityStatus;
   final double rating;
   final int reviewCount;
   final bool isVerified;
@@ -26,6 +27,7 @@ class Worker {
     required this.longitude,
     required this.dailyRate,
     this.isAvailable = true,
+    this.availabilityStatus = 'Available',
     this.rating = 4.8,
     this.reviewCount = 0,
     this.isVerified = true,
@@ -44,6 +46,7 @@ class Worker {
     double? longitude,
     double? dailyRate,
     bool? isAvailable,
+    String? availabilityStatus,
     double? rating,
     int? reviewCount,
     bool? isVerified,
@@ -61,6 +64,7 @@ class Worker {
       longitude: longitude ?? this.longitude,
       dailyRate: dailyRate ?? this.dailyRate,
       isAvailable: isAvailable ?? this.isAvailable,
+      availabilityStatus: availabilityStatus ?? this.availabilityStatus,
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,
       isVerified: isVerified ?? this.isVerified,

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/url_launcher_helper.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/rating_stars.dart';
 import '../../../../core/widgets/loading_indicator.dart';
@@ -36,9 +37,14 @@ class WorkerDetailScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 36,
-                          backgroundImage: NetworkImage(w.profilePhoto),
+                        ClipOval(
+                          child: AppImage(
+                            url: w.profilePhoto,
+                            width: 72,
+                            height: 72,
+                            fit: BoxFit.cover,
+                            placeholderIcon: Icons.person_rounded,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -56,6 +62,37 @@ class WorkerDetailScreen extends ConsumerWidget {
                                   if (w.isVerified)
                                     const Icon(Icons.verified, color: AppColors.primaryGreen, size: 20),
                                 ],
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: w.isAvailable ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: w.isAvailable ? Colors.green.shade200 : Colors.red.shade200),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: w.isAvailable ? Colors.green : Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      w.isAvailable ? 'Available for Work' : 'Busy / On Duty',
+                                      style: TextStyle(
+                                        color: w.isAvailable ? const Color(0xFF2E7D32) : Colors.red,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text('📍 ${w.location}', style: const TextStyle(color: AppColors.textSecondary)),
@@ -105,9 +142,16 @@ class WorkerDetailScreen extends ConsumerWidget {
                       icon: const Icon(Icons.chat_bubble, color: AppColors.whatsappGreen),
                       label: const Text('WhatsApp'),
                       onPressed: () {
-                        UrlLauncherHelper.openWhatsApp(
+                        final skillName = w.skills.isNotEmpty ? w.skills.first : 'Agricultural Worker';
+                        UrlLauncherHelper.showWhatsAppConfirmationBottomSheet(
+                          context: context,
                           phoneNumber: w.phone,
-                          message: 'Namaste ${w.name}, I found your worker profile on Krushi Mithra.',
+                          recipientName: w.name,
+                          category: 'Farm Worker Profile',
+                          itemTitle: '${w.name} ($skillName)',
+                          itemId: w.id,
+                          itemType: 'workers',
+                          customMessage: "I found your worker profile ($skillName) on Krushi Mithra and want to hire you.",
                         );
                       },
                     ),

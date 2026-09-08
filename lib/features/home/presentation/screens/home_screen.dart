@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/utils/app_share_helper.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/animated_farm_background.dart';
 import '../../../../core/widgets/app_drawer.dart';
+import '../../../../core/widgets/notifications_modal.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../machinery/presentation/providers/machinery_provider.dart';
+import '../../../../core/localization/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +29,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).value;
     final machinesAsync = ref.watch(machineryListProvider);
+    final selectedLang = ref.watch(languageProvider);
 
     return Scaffold(
       backgroundColor: AppColors.warmBackground,
@@ -59,55 +64,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Krushi Mithra',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppColors.warmDarkBrown,
-                    ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ref.tr('app_title'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.warmDarkBrown,
                   ),
-                  GestureDetector(
-                    onTap: () => _showLocationSelectionBottomSheet(context, ref, user),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            user?.locationName ?? 'Shivamogga, KA',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                ),
+                GestureDetector(
+                  onTap: () => _showLocationSelectionBottomSheet(context, ref, user),
+                  child: Row(
+                    children: [
+                      Text(
+                        user?.locationName ?? 'Shivamogga, KA',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
                         ),
-                        const SizedBox(width: 2),
-                        const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary, size: 14),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary, size: 14),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
         actions: [
+          // Share App Button
+          IconButton(
+            icon: const Icon(Icons.share_rounded, color: AppColors.primaryGreen, size: 22),
+            tooltip: 'Share App with Farmers',
+            onPressed: () => AppShareHelper.showShareAppBottomSheet(context),
+          ),
+
           // Notification Bell
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded, color: AppColors.warmDarkBrown, size: 24),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications: 3 new updates')),
-              );
-            },
+            tooltip: 'View Notifications',
+            onPressed: () => NotificationsModalSheet.show(context),
           ),
 
           // Message/Chat Icon with Red Badge '3'
@@ -183,19 +184,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ),
                                 Row(
                                   children: [
-                                    Flexible(
-                                      child: Text(
-                                        (user?.name ?? 'Bharath Poojary').split(' ').map((str) => str.isNotEmpty ? '${str[0].toUpperCase()}${str.substring(1).toLowerCase()}' : '').join(' '),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Color(0xFF2D1C10),
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          shadows: [
-                                            Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.white),
-                                          ],
-                                        ),
+                                    Text(
+                                      (user?.name ?? 'Bharath Poojary').split(' ').map((str) => str.isNotEmpty ? '${str[0].toUpperCase()}${str.substring(1).toLowerCase()}' : '').join(' '),
+                                      style: const TextStyle(
+                                        color: Color(0xFF2D1C10),
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        shadows: [
+                                          Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.white),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(width: 6),
@@ -229,94 +226,90 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
 
                             // Interactive Pill Badges Row
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              child: Row(
-                                children: [
-                                  // 1. Amber/Orange Role Pill Badge ("Farmer")
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(20),
-                                      onTap: () => _showRoleSelectionBottomSheet(context, ref, user),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFFFA000), // Vibrant Amber/Orange Fill
-                                          borderRadius: BorderRadius.circular(20),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(0xFFFFA000).withValues(alpha: 0.3),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 2),
+                            Row(
+                              children: [
+                                // 1. Amber/Orange Role Pill Badge ("Farmer")
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(20),
+                                    onTap: () => _showRoleSelectionBottomSheet(context, ref, user),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFA000), // Vibrant Amber/Orange Fill
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFFFA000).withValues(alpha: 0.3),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.person, size: 14, color: AppColors.warmDarkBrown),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            user?.role ?? 'Farmer',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.warmDarkBrown,
                                             ),
-                                          ],
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(Icons.person, size: 14, color: AppColors.warmDarkBrown),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              user?.role ?? 'Farmer',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.warmDarkBrown,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.warmDarkBrown),
-                                          ],
-                                        ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.warmDarkBrown),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
+                                ),
+                                const SizedBox(width: 10),
 
-                                  // 2. Crisp White Location Pill Badge ("Shivamogga, KA")
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(20),
-                                      onTap: () => _showLocationSelectionBottomSheet(context, ref, user),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(color: AppColors.warmBorder, width: 1),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(alpha: 0.05),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 2),
+                                // 2. Crisp White Location Pill Badge ("Shivamogga, KA")
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(20),
+                                    onTap: () => _showLocationSelectionBottomSheet(context, ref, user),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: AppColors.warmBorder, width: 1),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.05),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.location_on, size: 14, color: Color(0xFFFF6F00)),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            user?.locationName ?? 'Shivamogga, KA',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.warmDarkBrown,
                                             ),
-                                          ],
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(Icons.location_on, size: 14, color: Color(0xFFFF6F00)),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              user?.locationName ?? 'Shivamogga, KA',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.warmDarkBrown,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFFFF6F00)),
-                                          ],
-                                        ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFFFF6F00)),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -348,9 +341,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           child: TextField(
                             onSubmitted: (_) => context.go('/machinery'),
-                            decoration: const InputDecoration(
-                              hintText: 'Search tractors, harvesters, tillers...',
-                              hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                            decoration: InputDecoration(
+                              hintText: ref.tr('search_placeholder'),
+                              hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                               prefixIcon: Icon(Icons.search_rounded, color: AppColors.textMuted, size: 22),
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -717,15 +710,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                             ),
                                           ),
                                           const SizedBox(width: 4),
-                                          Flexible(
-                                            child: Text(
-                                              '(${m.reviewCount} Reviews)',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontSize: 11,
-                                                color: AppColors.textMuted,
-                                              ),
+                                          Text(
+                                            '(${m.reviewCount} Reviews)',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textMuted,
                                             ),
                                           ),
                                         ],
@@ -778,17 +767,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(18),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Left Content Column
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text(
                               'List your machine',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                                fontSize: 17,
                                 color: Color(0xFF1E3A24), // Dark Forest Green
                               ),
                             ),
@@ -796,16 +787,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const Text(
                               'Earn more by renting your machines and help other farmers.',
                               style: TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 11,
                                 color: Color(0xFF5A4D3E),
                                 height: 1.25,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 10),
                             GestureDetector(
                               onTap: () => context.push('/machinery/add'),
                               child: Container(
-                                padding: const EdgeInsets.fromLTRB(16, 7, 7, 7),
+                                padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF163820), // Dark Forest Green Pill
                                   borderRadius: BorderRadius.circular(24),
@@ -829,11 +822,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         fontSize: 12,
                                       ),
                                     ),
-                                    SizedBox(width: 8),
+                                    SizedBox(width: 6),
                                     CircleAvatar(
-                                      radius: 11,
+                                      radius: 10,
                                       backgroundColor: Color(0xFFC5A059), // Gold Arrow Circle
-                                      child: Icon(Icons.arrow_forward_rounded, color: Color(0xFF163820), size: 13),
+                                      child: Icon(Icons.arrow_forward_rounded, color: Color(0xFF163820), size: 12),
                                     ),
                                   ],
                                 ),
@@ -842,20 +835,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
 
                       // Right Side Clipped Tractor & Farm Artwork
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(16),
                         child: SizedBox(
-                          width: 120,
-                          height: 110,
+                          width: 100,
+                          height: 95,
                           child: Image.asset(
                             'assets/images/farm_hero_banner_illustration.jpg',
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
+                            errorBuilder: (_, __, ___) => Container(
                               color: const Color(0xFFE8F5E9),
-                              child: const Icon(Icons.agriculture_rounded, color: Color(0xFF163820), size: 48),
+                              child: const Icon(Icons.agriculture_rounded, color: Color(0xFF163820), size: 40),
                             ),
                           ),
                         ),
@@ -884,7 +877,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -901,26 +894,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: bgColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: iconColor, size: 21),
+              child: Icon(icon, color: iconColor, size: 22),
             ),
-            const SizedBox(height: 6),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                  color: AppColors.warmDarkBrown,
-                  height: 1.15,
-                ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                color: AppColors.warmDarkBrown,
+                height: 1.15,
               ),
             ),
           ],
@@ -1180,7 +1170,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: ListView.separated(
                       controller: scrollController,
                       itemCount: locations.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.warmBorder),
+                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.warmBorder),
                       itemBuilder: (context, idx) {
                         final loc = locations[idx];
                         final isSelected = loc == currentLocation;

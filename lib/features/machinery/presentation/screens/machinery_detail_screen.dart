@@ -169,9 +169,14 @@ class MachineryDetailScreen extends ConsumerWidget {
                                 icon: const Icon(Icons.chat_bubble_rounded, color: AppColors.whatsappGreen),
                                 tooltip: 'WhatsApp Owner',
                                 onPressed: () {
-                                  UrlLauncherHelper.openWhatsApp(
+                                  UrlLauncherHelper.showWhatsAppConfirmationBottomSheet(
+                                    context: context,
                                     phoneNumber: m.ownerPhone,
-                                    message: 'Namaste ${m.ownerName}, I am interested in renting your ${m.name} on Krushi Mithra.',
+                                    recipientName: m.ownerName,
+                                    category: 'Machinery Rental',
+                                    itemTitle: m.name,
+                                    itemId: m.id,
+                                    itemType: 'machines',
                                   );
                                 },
                               ),

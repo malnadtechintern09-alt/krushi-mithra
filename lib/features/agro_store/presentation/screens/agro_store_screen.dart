@@ -9,8 +9,11 @@ import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/rating_stars.dart';
 import '../../../../core/widgets/loading_indicator.dart';
+import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../marketplace/presentation/providers/marketplace_provider.dart';
 import '../providers/cart_provider.dart';
+import '../../../../core/localization/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 
 class AgroStoreScreen extends ConsumerStatefulWidget {
   const AgroStoreScreen({super.key});
@@ -26,10 +29,11 @@ class _AgroStoreScreenState extends ConsumerState<AgroStoreScreen> {
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(agroStoreProductsProvider);
     final cart = ref.watch(cartProvider);
+    final selectedLang = ref.watch(languageProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🌱 Official Agro Store'),
+        title: Text('🌱 ${ref.tr('agro_store')}'),
         actions: [
           Stack(
             children: [
@@ -121,24 +125,55 @@ class _AgroStoreScreenState extends ConsumerState<AgroStoreScreen> {
 
           // Catalog Grid
           Expanded(
-            child: productsAsync.when(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(agroStoreProductsProvider);
+              },
+              child: productsAsync.when(
               data: (products) {
                 final filtered = _selectedCategory == 'All'
                     ? products
-                    : products.where((p) => p.category == _selectedCategory).toList();
+                    : products.where((p) {
+                        final catLower = p.category.toLowerCase();
+                        final selLower = _selectedCategory.toLowerCase();
+                        return catLower == selLower ||
+                            catLower.contains(selLower) ||
+                            selLower.contains(catLower) ||
+                            (selLower.contains('fertil') && catLower.contains('fertil'));
+                      }).toList();
+
+                if (filtered.isEmpty) {
+                  return const EmptyStateWidget(
+                    icon: Icons.storefront_outlined,
+                    title: 'No Store Products Found',
+                    description: 'No supplies available for the selected category.',
+                  );
+                }
 
                 return GridView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 14,
                     crossAxisSpacing: 14,
-                    childAspectRatio: 0.68,
+                    childAspectRatio: 0.62,
                   ),
                   itemCount: filtered.length,
                   itemBuilder: (ctx, i) {
                     final p = filtered[i];
-                    return Card(
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Column(
@@ -146,7 +181,7 @@ class _AgroStoreScreenState extends ConsumerState<AgroStoreScreen> {
                           children: [
                             Expanded(
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                                 child: AppImage(
                                   url: p.images.first,
                                   width: double.infinity,
@@ -157,7 +192,11 @@ class _AgroStoreScreenState extends ConsumerState<AgroStoreScreen> {
                             const SizedBox(height: 8),
                             Text(
                               p.title,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                height: 1.2,
+                              ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -169,19 +208,29 @@ class _AgroStoreScreenState extends ConsumerState<AgroStoreScreen> {
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primaryGreen,
+                                color: Color(0xFF1B5E20),
                               ),
                             ),
                             const SizedBox(height: 8),
                             CustomButton(
                               text: 'Add to Cart',
-                              height: 34,
+                              icon: Icons.add_shopping_cart_rounded,
+                              iconSize: 15,
+                              height: 36,
+                              borderRadius: 20,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              backgroundColor: const Color(0xFF1E4D2B),
                               onPressed: () {
                                 ref.read(cartProvider.notifier).addToCart(p);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Added ${p.title} to cart'),
                                     duration: const Duration(seconds: 1),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                 );
                               },
@@ -197,6 +246,7 @@ class _AgroStoreScreenState extends ConsumerState<AgroStoreScreen> {
               error: (err, _) => Center(child: Text('Error: $err')),
             ),
           ),
+        ),
         ],
       ),
     );

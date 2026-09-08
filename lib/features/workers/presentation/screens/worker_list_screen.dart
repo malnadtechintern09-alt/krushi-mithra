@@ -10,7 +10,10 @@ import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/app_drawer.dart';
+import '../../../../core/widgets/notifications_modal.dart';
 import '../providers/worker_provider.dart';
+import '../../../../core/localization/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 
 class WorkerListScreen extends ConsumerStatefulWidget {
   const WorkerListScreen({super.key});
@@ -52,6 +55,7 @@ class _WorkerListScreenState extends ConsumerState<WorkerListScreen> {
   Widget build(BuildContext context) {
     final filter = ref.watch(workerFilterProvider);
     final workersAsync = ref.watch(workerListProvider);
+    final selectedLang = ref.watch(languageProvider);
 
     return Scaffold(
       backgroundColor: AppColors.warmBackground,
@@ -109,11 +113,7 @@ class _WorkerListScreenState extends ConsumerState<WorkerListScreen> {
                                     children: [
                                       IconButton(
                                         icon: const Icon(Icons.notifications_none_rounded, color: AppColors.warmDarkBrown, size: 24),
-                                        onPressed: () {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Notifications: 2 new worker requests')),
-                                          );
-                                        },
+                                        onPressed: () => NotificationsModalSheet.show(context),
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.primaryGreen, size: 24),
@@ -127,9 +127,9 @@ class _WorkerListScreenState extends ConsumerState<WorkerListScreen> {
                               const SizedBox(height: 6),
 
                               // Header Title & Subtitle (Clean & High Contrast)
-                              const Text(
-                                'Hire Farm\nWorkers & Drivers',
-                                style: TextStyle(
+                              Text(
+                                ref.tr('hire_workers'),
+                                style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.warmDarkBrown,
@@ -232,7 +232,7 @@ class _WorkerListScreenState extends ConsumerState<WorkerListScreen> {
                 final sf = _skillFilters[i];
                 final sfName = sf['id'] as String;
                 final isSelected = filter.selectedSkill == sfName ||
-                    (sfName == 'All' && filter.selectedSkill == null);
+                    (sfName == 'All' && (filter.selectedSkill == 'All' || filter.selectedSkill.isEmpty));
 
                 return GestureDetector(
                   onTap: () {
@@ -240,7 +240,7 @@ class _WorkerListScreenState extends ConsumerState<WorkerListScreen> {
                       _showMoreSkillsBottomSheet(context);
                     } else {
                       ref.read(workerFilterProvider.notifier).state = filter.copyWith(
-                        selectedSkill: sfName == 'All' ? null : sfName,
+                        selectedSkill: sfName,
                       );
                     }
                   },
@@ -319,7 +319,13 @@ class _WorkerListScreenState extends ConsumerState<WorkerListScreen> {
                   );
                 }
 
-                return ListView.builder(
+                return RefreshIndicator(
+                  color: AppColors.primaryGreen,
+                  onRefresh: () async {
+                    ref.invalidate(workerListProvider);
+                    await ref.read(workerListProvider.future);
+                  },
+                  child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   itemCount: workers.length,
                   itemBuilder: (ctx, i) {
@@ -383,21 +389,40 @@ class _WorkerListScreenState extends ConsumerState<WorkerListScreen> {
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                            if (w.isVerified)
-                                              const Row(
-                                                children: [
-                                                  Icon(Icons.add_circle_rounded, color: Color(0xFF2E7D32), size: 14),
-                                                  SizedBox(width: 3),
-                                                  Text(
-                                                    'Verified',
-                                                    style: TextStyle(
-                                                      color: Color(0xFF2E7D32),
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: w.isAvailable ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    border: Border.all(color: w.isAvailable ? Colors.green.shade200 : Colors.red.shade200),
                                                   ),
-                                                ],
-                                              ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Container(
+                                                        width: 6,
+                                                        height: 6,
+                                                        decoration: BoxDecoration(
+                                                          color: w.isAvailable ? Colors.green : Colors.red,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        w.isAvailable ? 'Available' : 'Busy',
+                                                        style: TextStyle(
+                                                          color: w.isAvailable ? const Color(0xFF2E7D32) : Colors.red,
+                                                          fontSize: 10,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ],
                                         ),
                                         const SizedBox(height: 2),
@@ -553,15 +578,17 @@ class _WorkerListScreenState extends ConsumerState<WorkerListScreen> {
                       ),
                     );
                   },
-                );
-              },
+                ),
+              );
+            },
               loading: () => const LoadingIndicator(message: 'Searching available farm workers...'),
               error: (err, _) => Center(child: Text('Error: $err')),
             ),
-          ),
+          ),      
         ],
       ),
     );
+    
   }
 
   void _showFilterBottomSheet(BuildContext context) {

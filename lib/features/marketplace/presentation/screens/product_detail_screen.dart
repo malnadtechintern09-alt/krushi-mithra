@@ -155,9 +155,14 @@ class ProductDetailScreen extends ConsumerWidget {
                   backgroundColor: AppColors.whatsappGreen,
                   icon: Icons.chat_bubble_rounded,
                   onPressed: () {
-                    UrlLauncherHelper.openWhatsApp(
+                    UrlLauncherHelper.showWhatsAppConfirmationBottomSheet(
+                      context: context,
                       phoneNumber: p.sellerPhone,
-                      message: 'Namaste ${p.sellerName}, I want to buy ${p.title} from your Krushi Mithra listing.',
+                      recipientName: p.sellerName,
+                      category: 'Produce Listing',
+                      itemTitle: p.title,
+                      itemId: p.id,
+                      itemType: 'marketplace',
                     );
                   },
                 ),

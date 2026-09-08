@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/agro_store/presentation/screens/agro_store_screen.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/agro_store/presentation/screens/cart_screen.dart';
 import '../../features/agro_store/presentation/screens/checkout_screen.dart';
 import '../../features/agro_store/presentation/screens/order_success_screen.dart';
@@ -190,6 +191,30 @@ final appRouter = GoRouter(
       path: RoutePaths.orderSuccess,
       name: RouteNames.orderSuccess,
       builder: (context, state) => const OrderSuccessScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RoutePaths.profile,
+      name: RouteNames.profile,
+      builder: (context, state) => const ProfileScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RoutePaths.joinProvider,
+      name: RouteNames.joinProvider,
+      builder: (context, state) => const JoinProviderScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RoutePaths.myApplications,
+      name: RouteNames.myApplications,
+      builder: (context, state) => const MyApplicationsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: RoutePaths.login,
+      name: RouteNames.login,
+      builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

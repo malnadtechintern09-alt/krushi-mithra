@@ -8,7 +8,10 @@ import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/app_image.dart';
 import '../../../../core/widgets/app_drawer.dart';
+import '../../../../core/widgets/notifications_modal.dart';
 import '../providers/machinery_provider.dart';
+import '../../../../core/localization/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 
 class MachineryListScreen extends ConsumerStatefulWidget {
   const MachineryListScreen({super.key});
@@ -22,7 +25,7 @@ class _MachineryListScreenState extends ConsumerState<MachineryListScreen> {
 
   final List<Map<String, dynamic>> _categories = [
     {
-      'id': 'All Machines',
+      'id': 'All',
       'name': 'All Machines',
       'icon': Icons.grid_view_rounded,
     },
@@ -53,6 +56,7 @@ class _MachineryListScreenState extends ConsumerState<MachineryListScreen> {
   Widget build(BuildContext context) {
     final filter = ref.watch(machineryFilterProvider);
     final machinesAsync = ref.watch(machineryListProvider);
+    final selectedLang = ref.watch(languageProvider);
 
     return Scaffold(
       backgroundColor: AppColors.warmBackground,
@@ -67,12 +71,12 @@ class _MachineryListScreenState extends ConsumerState<MachineryListScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Rent Agricultural Machines',
-              style: TextStyle(
+              ref.tr('rent_machinery'),
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17,
                 color: AppColors.warmDarkBrown,
@@ -92,11 +96,8 @@ class _MachineryListScreenState extends ConsumerState<MachineryListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded, color: AppColors.warmDarkBrown, size: 24),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications: 3 new updates')),
-              );
-            },
+            tooltip: 'View Notifications',
+            onPressed: () => NotificationsModalSheet.show(context),
           ),
           IconButton(
             icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.primaryGreen, size: 24),
@@ -186,12 +187,12 @@ class _MachineryListScreenState extends ConsumerState<MachineryListScreen> {
                 final catId = cat['id'] as String;
                 final isNewCat = cat['isNew'] == true;
                 final isSelected = filter.selectedCategory == catId ||
-                    (catId == 'All Machines' && filter.selectedCategory == null);
+                    (catId == 'All' && (filter.selectedCategory == 'All' || filter.selectedCategory == 'All Machines'));
 
                 return GestureDetector(
                   onTap: () {
                     ref.read(machineryFilterProvider.notifier).state = filter.copyWith(
-                      selectedCategory: catId == 'All Machines' ? null : catId,
+                      selectedCategory: catId,
                     );
                   },
                   child: Stack(

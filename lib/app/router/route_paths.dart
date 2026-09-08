@@ -21,6 +21,7 @@ class RoutePaths {
 
   static const String myOrders = '/my-orders';
   static const String profile = '/profile';
+  static const String login = '/login';
   static const String admin = '/admin';
 
   static const String joinProvider = '/provider/join';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/config/constants.dart';
@@ -393,8 +394,9 @@ class _AddMachineScreenState extends ConsumerState<AddMachineScreen> {
                     setState(() => _isSubmitting = false);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('✅ Machine successfully listed for rent!'),
+                        content: Text('✅ Machine details saved & submitted to Admin Panel for approval!'),
                         backgroundColor: AppColors.primaryGreen,
+                        duration: Duration(seconds: 4),
                       ),
                     );
                     context.pop();
@@ -406,6 +408,45 @@ class _AddMachineScreenState extends ConsumerState<AddMachineScreen> {
         ),
       ),
     );
+  }
+
+  // ImagePicker Handler for Machine Photos (Camera & Gallery)
+  Future<void> _pickMachineImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1200,
+        maxHeight: 1200,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImages.add(pickedFile.path);
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(source == ImageSource.camera
+                  ? '📸 Photo captured with camera!'
+                  : '🖼️ Photo selected from phone gallery!'),
+              backgroundColor: AppColors.primaryGreen,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[ImagePicker Machine Error] $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Camera/Gallery response error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   // Vehicle & Machine Photo Picker Bottom Sheet Options Modal
@@ -447,15 +488,7 @@ class _AddMachineScreenState extends ConsumerState<AddMachineScreen> {
                 subtitle: const Text('Capture live photo of your tractor or machine'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  setState(() {
-                    _selectedImages.add('assets/images/mahindra_575_di.jpg');
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('📸 Photo captured successfully!'),
-                      backgroundColor: AppColors.primaryGreen,
-                    ),
-                  );
+                  _pickMachineImage(ImageSource.camera);
                 },
               ),
 
@@ -469,15 +502,7 @@ class _AddMachineScreenState extends ConsumerState<AddMachineScreen> {
                 subtitle: const Text('Select existing vehicle photo from phone gallery'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  setState(() {
-                    _selectedImages.add('assets/images/kubota_combine_harvester.jpg');
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('🖼️ Photo added from gallery!'),
-                      backgroundColor: AppColors.primaryGreen,
-                    ),
-                  );
+                  _pickMachineImage(ImageSource.gallery);
                 },
               ),
 

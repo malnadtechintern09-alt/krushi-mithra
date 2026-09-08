@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/url_launcher_helper.dart';
@@ -13,6 +15,8 @@ import '../../../marketplace/presentation/providers/marketplace_provider.dart';
 import '../../domain/entities/booking.dart';
 import '../../domain/entities/order.dart';
 import '../providers/bookings_orders_provider.dart';
+import '../../../../core/localization/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 
 class MyOrdersScreen extends ConsumerStatefulWidget {
   const MyOrdersScreen({super.key});
@@ -22,13 +26,92 @@ class MyOrdersScreen extends ConsumerStatefulWidget {
 }
 
 class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
+  static const String _hiddenHistoryStorageKey = 'krushi_hidden_history_ids';
+
   String _selectedStatusFilter = 'All';
+  final Set<String> _hiddenHistoryIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHiddenHistoryIds();
+  }
+
+  Future<void> _loadHiddenHistoryIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hiddenList = prefs.getStringList(_hiddenHistoryStorageKey) ?? [];
+      if (mounted && hiddenList.isNotEmpty) {
+        setState(() {
+          _hiddenHistoryIds.addAll(hiddenList);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveHiddenHistoryIds() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_hiddenHistoryStorageKey, _hiddenHistoryIds.toList());
+    } catch (_) {}
+  }
+
+  void _showClearHistoryConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.cleaning_services_rounded, color: AppColors.primaryGreen),
+            SizedBox(width: 10),
+            Text('Clear History & Filters?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'This will reset your status filters back to "All" and restore any hidden activity cards in your history feed.',
+          style: TextStyle(fontSize: 13, color: AppColors.warmDarkBrown),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
+            label: const Text('Clear Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              setState(() {
+                _selectedStatusFilter = 'All';
+                _hiddenHistoryIds.clear();
+              });
+              _saveHiddenHistoryIds();
+              ref.invalidate(userBookingsProvider);
+              ref.invalidate(userOrdersProvider);
+              ref.invalidate(marketplaceProductsProvider);
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Activity history filters & view cleared!'),
+                  duration: Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final bookingsAsync = ref.watch(userBookingsProvider);
     final ordersAsync = ref.watch(userOrdersProvider);
     final productsAsync = ref.watch(marketplaceProductsProvider);
+    final selectedLang = ref.watch(languageProvider);
 
     return DefaultTabController(
       length: 4,
@@ -47,12 +130,12 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
               }
             },
           ),
-          title: const Column(
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'My Activity & History Details',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                ref.tr('my_orders'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
               ),
               Text(
                 'All rentals, worker hires, orders & sales',
@@ -61,6 +144,11 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
             ],
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.cleaning_services_rounded, color: Colors.white),
+              tooltip: 'Clear History & Filters',
+              onPressed: _showClearHistoryConfirmationDialog,
+            ),
             IconButton(
               icon: const Icon(Icons.home_rounded, color: Colors.white),
               tooltip: 'Return to Home',
@@ -100,28 +188,58 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: ['All', 'Confirmed', 'Completed', 'In Progress'].map((status) {
-                          final isSelected = _selectedStatusFilter == status;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: ChoiceChip(
-                              label: Text(status),
-                              selected: isSelected,
-                              selectedColor: AppColors.primaryGreen,
-                              backgroundColor: AppColors.chipBackground,
-                              labelStyle: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : AppColors.warmDarkBrown,
+                        children: [
+                          ...['All', 'Confirmed', 'Completed', 'In Progress'].map((status) {
+                            final isSelected = _selectedStatusFilter == status;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ChoiceChip(
+                                label: Text(status),
+                                selected: isSelected,
+                                selectedColor: AppColors.primaryGreen,
+                                backgroundColor: AppColors.chipBackground,
+                                labelStyle: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : AppColors.warmDarkBrown,
+                                ),
+                                onSelected: (_) {
+                                  setState(() {
+                                    _selectedStatusFilter = status;
+                                  });
+                                },
                               ),
-                              onSelected: (_) {
-                                setState(() {
-                                  _selectedStatusFilter = status;
-                                });
-                              },
+                            );
+                          }),
+                          if (_selectedStatusFilter != 'All' || _hiddenHistoryIds.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: TextButton.icon(
+                                icon: const Icon(Icons.clear_all_rounded, size: 16, color: AppColors.error),
+                                label: const Text('Clear', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.error)),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedStatusFilter = 'All';
+                                    _hiddenHistoryIds.clear();
+                                  });
+                                  _saveHiddenHistoryIds();
+                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Status filters and history view cleared.'),
+                                      duration: Duration(seconds: 2),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                          );
-                        }).toList(),
+                        ],
                       ),
                     ),
                   ),
@@ -131,20 +249,27 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
 
             // Tab Views
             Expanded(
-              child: TabBarView(
-                children: [
-                  // Tab 1: All Combined History Feed
-                  _buildAllCombinedHistoryTab(bookingsAsync, ordersAsync),
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(userBookingsProvider);
+                  ref.invalidate(userOrdersProvider);
+                  ref.invalidate(marketplaceProductsProvider);
+                },
+                child: TabBarView(
+                  children: [
+                    // Tab 1: All Combined History Feed
+                    _buildAllCombinedHistoryTab(bookingsAsync, ordersAsync),
 
-                  // Tab 2: Machine & Worker Bookings History
-                  _buildBookingsTab(bookingsAsync),
+                    // Tab 2: Machine & Worker Bookings History
+                    _buildBookingsTab(bookingsAsync),
 
-                  // Tab 3: Agro Store Purchases History
-                  _buildOrdersTab(ordersAsync),
+                    // Tab 3: Agro Store Purchases History
+                    _buildOrdersTab(ordersAsync),
 
-                  // Tab 4: Produce Sales & Listings History
-                  _buildProduceSalesTab(productsAsync),
-                ],
+                    // Tab 4: Produce Sales & Listings History
+                    _buildProduceSalesTab(productsAsync),
+                  ],
+                ),
               ),
             ),
           ],
@@ -171,11 +296,13 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
     }
 
     final filteredBookings = bookings.where((b) {
+      if (_hiddenHistoryIds.contains(b.id)) return false;
       if (_selectedStatusFilter == 'All') return true;
       return b.bookingStatus.toLowerCase().contains(_selectedStatusFilter.toLowerCase());
     }).toList();
 
     final filteredOrders = orders.where((o) {
+      if (_hiddenHistoryIds.contains(o.id)) return false;
       if (_selectedStatusFilter == 'All') return true;
       return o.orderStatus.toLowerCase().contains(_selectedStatusFilter.toLowerCase());
     }).toList();
@@ -187,7 +314,7 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
             child: Text(
-              'REENTALS & WORKER BOOKINGS',
+              'RENTALS & WORKER BOOKINGS',
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 0.5),
             ),
           ),
@@ -214,6 +341,7 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
     return bookingsAsync.when(
       data: (bookings) {
         final filtered = bookings.where((b) {
+          if (_hiddenHistoryIds.contains(b.id)) return false;
           if (_selectedStatusFilter == 'All') return true;
           return b.bookingStatus.toLowerCase().contains(_selectedStatusFilter.toLowerCase());
         }).toList();
@@ -242,6 +370,7 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
     return ordersAsync.when(
       data: (orders) {
         final filtered = orders.where((o) {
+          if (_hiddenHistoryIds.contains(o.id)) return false;
           if (_selectedStatusFilter == 'All') return true;
           return o.orderStatus.toLowerCase().contains(_selectedStatusFilter.toLowerCase());
         }).toList();
@@ -463,7 +592,44 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
                       ),
                     ),
                   ),
-                  StatusBadge(status: b.bookingStatus),
+                  Row(
+                    children: [
+                      StatusBadge(status: b.bookingStatus),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            _hiddenHistoryIds.add(b.id);
+                          });
+                          _saveHiddenHistoryIds();
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Cleared "${b.targetTitle}" from history view.'),
+                              action: SnackBarAction(
+                                label: 'Undo',
+                                textColor: AppColors.accentGold,
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  setState(() {
+                                    _hiddenHistoryIds.remove(b.id);
+                                  });
+                                  _saveHiddenHistoryIds();
+                                },
+                              ),
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.all(2.0),
+                          child: Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -538,9 +704,14 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         ),
                         onPressed: () {
-                          UrlLauncherHelper.openWhatsApp(
+                          UrlLauncherHelper.showWhatsAppConfirmationBottomSheet(
+                            context: context,
                             phoneNumber: b.providerPhone,
-                            message: 'Namaste ${b.providerName}, regarding my booking #${b.id} on Krushi Mithra.',
+                            recipientName: b.providerName,
+                            category: 'Service Booking',
+                            itemTitle: b.targetTitle,
+                            itemId: b.id,
+                            itemType: 'bookings',
                           );
                         },
                       ),
@@ -576,7 +747,44 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Order #${o.id}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  StatusBadge(status: o.orderStatus),
+                  Row(
+                    children: [
+                      StatusBadge(status: o.orderStatus),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            _hiddenHistoryIds.add(o.id);
+                          });
+                          _saveHiddenHistoryIds();
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Cleared Order #${o.id} from history view.'),
+                              action: SnackBarAction(
+                                label: 'Undo',
+                                textColor: AppColors.accentGold,
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  setState(() {
+                                    _hiddenHistoryIds.remove(o.id);
+                                  });
+                                  _saveHiddenHistoryIds();
+                                },
+                              ),
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.all(2.0),
+                          child: Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -730,7 +938,16 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.chat, color: AppColors.whatsappGreen),
-                            onPressed: () => UrlLauncherHelper.openWhatsApp(phoneNumber: booking.providerPhone, message: 'Namaste ${booking.providerName}'),
+                            onPressed: () => UrlLauncherHelper.openWhatsApp(
+                              phoneNumber: booking.providerPhone,
+                              message: UrlLauncherHelper.buildStructuredWhatsAppMessage(
+                                category: 'Service Booking',
+                                recipientName: booking.providerName,
+                                itemTitle: booking.targetTitle,
+                                itemId: booking.id,
+                                itemType: 'bookings',
+                              ),
+                            ),
                           ),
                         ],
                       ),

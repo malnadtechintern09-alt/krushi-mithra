@@ -49,6 +49,28 @@ class WorkerRepositoryImpl implements WorkerRepository {
   @override
   Future<Worker> registerWorker(Worker worker) async {
     _workers.insert(0, worker);
+
+    try {
+      final workerMap = {
+        'id': worker.id,
+        'name': worker.name,
+        'phone': worker.phone,
+        'skills': worker.skills,
+        'experienceYears': worker.experienceYears,
+        'location': worker.location,
+        'latitude': worker.latitude,
+        'longitude': worker.longitude,
+        'dailyRate': worker.dailyRate,
+        'isVerified': false,
+        'status': 'Pending',
+        'isAvailable': false,
+        'availabilityStatus': 'Pending Approval',
+        'profilePhoto': worker.profilePhoto,
+        'bio': worker.bio,
+      };
+      await ApiService().submitWorker(workerMap);
+    } catch (_) {}
+
     return worker;
   }
 

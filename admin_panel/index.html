@@ -139,18 +139,42 @@
         </div>
 
         <div class="header-actions">
+          <!-- Language Selector Button -->
+          <div class="language-selector-wrapper" style="position: relative; margin-right: 8px;">
+            <button class="header-btn" onclick="toggleLanguageMenu(event)" id="lang-selector-btn" title="Change Language / ಭಾಷೆ ಬದಲಾಯಿಸಿ" style="display:flex; align-items:center; gap:6px; padding: 6px 12px; border-radius: 20px; background: #F1F5F9; border: 1px solid #CBD5E1; cursor: pointer;">
+              <i class="fa-solid fa-globe" style="color:var(--primary);"></i>
+              <span id="current-lang-code" style="font-size:12px; font-weight:700; color:var(--dark-text);">EN</span>
+              <i class="fa-solid fa-chevron-down" style="font-size:10px; color:var(--gray-text);"></i>
+            </button>
+            <div class="language-dropdown-menu" id="language-dropdown-menu" style="display: none;">
+              <a href="#" onclick="changeAdminLanguage('en'); return false;" id="lang-opt-en"><span class="lang-flag">🇬🇧</span> English</a>
+              <a href="#" onclick="changeAdminLanguage('kn'); return false;" id="lang-opt-kn"><span class="lang-flag">🇮🇳</span> ಕನ್ನಡ (Kannada)</a>
+              <a href="#" onclick="changeAdminLanguage('hi'); return false;" id="lang-opt-hi"><span class="lang-flag">🇮🇳</span> हिंदी (Hindi)</a>
+              <a href="#" onclick="changeAdminLanguage('te'); return false;" id="lang-opt-te"><span class="lang-flag">🇮🇳</span> తెలుగు (Telugu)</a>
+              <a href="#" onclick="changeAdminLanguage('ta'); return false;" id="lang-opt-ta"><span class="lang-flag">🇮🇳</span> தமிழ் (Tamil)</a>
+            </div>
+          </div>
+
           <button class="header-btn" onclick="switchView('notifications')" title="Notifications">
             <i class="fa-regular fa-bell"></i>
             <span class="notification-badge" id="notif-count-badge">2</span>
           </button>
 
-          <div class="admin-profile" onclick="toggleAdminMenu()">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Admin Avatar" class="admin-avatar">
-            <div class="admin-info">
-              <span class="admin-name">Bharath Admin</span>
-              <span class="admin-role">Super Administrator</span>
+          <div class="admin-profile-wrapper" style="position: relative;">
+            <div class="admin-profile" onclick="toggleAdminMenu()">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Admin Avatar" class="admin-avatar">
+              <div class="admin-info">
+                <span class="admin-name" id="current-admin-name">Bharath Admin</span>
+                <span class="admin-role" id="current-admin-role">Super Administrator</span>
+              </div>
+              <i class="fa-solid fa-chevron-down" style="font-size: 11px; color: var(--gray-text);"></i>
             </div>
-            <i class="fa-solid fa-chevron-down" style="font-size: 11px; color: var(--gray-text);"></i>
+            <div class="admin-dropdown-menu" id="admin-dropdown-menu" style="display: none;">
+              <a href="#" onclick="switchView('settings'); toggleAdminMenu(); return false;"><i class="fa-solid fa-sliders"></i> Account Settings</a>
+              <a href="#" onclick="switchView('admin-users'); toggleAdminMenu(); return false;"><i class="fa-solid fa-user-shield"></i> Admin Users</a>
+              <div class="dropdown-divider"></div>
+              <a href="#" onclick="handleAdminLogout(); return false;" style="color: var(--red-alert);"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+            </div>
           </div>
         </div>
       </header>
@@ -159,6 +183,59 @@
       <main class="content-area" id="content-area">
         <!-- Views will be injected by app.js -->
       </main>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN OVERLAY -->
+  <div id="admin-login-screen" class="admin-login-overlay">
+    <div class="admin-login-card">
+      <div class="admin-login-header">
+        <div class="admin-brand-icon">🌾</div>
+        <h2>KRUSHI MITHRA</h2>
+        <p class="admin-login-subtitle">Web Admin Portal & Control Center</p>
+      </div>
+
+      <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+        <div id="login-error-msg" class="login-error-alert" style="display: none;"></div>
+
+        <div class="form-group">
+          <label for="admin-email"><i class="fa-solid fa-envelope"></i> Admin Email</label>
+          <input type="email" id="admin-email" class="form-control" value="admin@krushimithra.com" required placeholder="admin@krushimithra.com">
+        </div>
+
+        <div class="form-group">
+          <label for="admin-password"><i class="fa-solid fa-lock"></i> Password</label>
+          <div class="password-input-wrap">
+            <input type="password" id="admin-password" class="form-control" value="admin123" required placeholder="••••••••">
+            <button type="button" class="toggle-password-btn" onclick="toggleAdminPasswordVisibility()">
+              <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="checkbox-wrap">
+            <input type="checkbox" id="remember-admin" checked>
+            <span>Remember this session</span>
+          </label>
+          <a href="#" onclick="alert('Password reset link sent to admin registered email.'); return false;" class="forgot-link">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="admin-login-btn">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Admin Portal
+        </button>
+
+        <div class="demo-quick-login">
+          <div class="divider-text"><span>or 1-Tap Quick Access</span></div>
+          <button type="button" class="btn btn-secondary btn-block" onclick="quickAdminDemoLogin()">
+            <i class="fa-solid fa-bolt"></i> Instant Demo Super Admin Access
+          </button>
+        </div>
+      </form>
+
+      <div class="admin-login-footer">
+        <i class="fa-solid fa-shield-halved"></i> Secured with 256-bit SSL & Role-Based Access
+      </div>
     </div>
   </div>
 

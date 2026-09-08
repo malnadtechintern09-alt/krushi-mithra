@@ -172,6 +172,7 @@ class ApiService {
             longitude: ((w['longitude'] ?? 75.5670) as num).toDouble(),
             dailyRate: ((w['dailyRate'] ?? 900) as num).toDouble(),
             isAvailable: w['isAvailable'] == true || w['availabilityStatus'] == 'Available',
+            availabilityStatus: w['availabilityStatus']?.toString() ?? ((w['isAvailable'] == true || w['availabilityStatus'] == 'Available') ? 'Available' : 'Busy'),
             rating: ((w['rating'] ?? 4.8) as num).toDouble(),
             reviewCount: (w['reviewCount'] ?? 12) as int,
             isVerified: w['isVerified'] == true || w['status'] == 'Approved',
@@ -191,17 +192,27 @@ class ApiService {
   }
 
   Future<List<Product>> fetchMarketplaceProducts() async {
-    debugPrint('[MARKETPLACE] Requesting produce list...');
+    debugPrint('[MARKETPLACE] Requesting produce & store lists...');
     final data = await _get('/marketplace');
+    final storeData = await _get('/store');
     
-    List<dynamic>? rawList;
+    final List<dynamic> rawList = [];
     if (data is List) {
-      rawList = data;
+      rawList.addAll(data);
     } else if (data is Map<String, dynamic> && data['products'] is List) {
-      rawList = data['products'] as List;
+      rawList.addAll(data['products'] as List);
     }
 
-    if (rawList != null && rawList.isNotEmpty) {
+    if (storeData is List) {
+      for (final s in storeData) {
+        if (s is Map<String, dynamic>) {
+          s['isAgroStoreItem'] = true;
+          rawList.add(s);
+        }
+      }
+    }
+
+    if (rawList.isNotEmpty) {
       try {
         final products = rawList.map((item) {
           final p = item as Map<String, dynamic>;
@@ -213,28 +224,28 @@ class ApiService {
             images = [rawImages];
           }
           if (images.isEmpty) {
-            images = ['https://images.unsplash.com/photo-1546430498-05c7b929fb30?w=800'];
+            images = ['https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=800'];
           }
 
           return Product(
             id: p['id']?.toString() ?? 'p_1',
             title: p['title']?.toString() ?? 'Product',
-            category: p['category']?.toString() ?? 'Produce',
-            sellerId: p['sellerId']?.toString() ?? 'seller_1',
-            sellerName: p['sellerName']?.toString() ?? 'Seller',
-            sellerPhone: p['sellerPhone']?.toString() ?? '',
+            category: p['category']?.toString() ?? 'Seeds',
+            sellerId: p['sellerId']?.toString() ?? 'krushi_store',
+            sellerName: p['brand']?.toString() ?? p['sellerName']?.toString() ?? 'Krushi Mithra Official Agro Store',
+            sellerPhone: p['sellerPhone']?.toString() ?? '+91 8000 999 000',
             images: images,
             description: p['description']?.toString() ?? '',
-            price: ((p['price'] ?? 480) as num).toDouble(),
-            unit: p['unit']?.toString() ?? 'kg',
+            price: ((p['price'] ?? 850) as num).toDouble(),
+            unit: p['unit']?.toString() ?? 'bag',
             quantityAvailable: ((p['quantityAvailable'] ?? 100) as num).toDouble(),
             location: p['location']?.toString() ?? 'Shivamogga, KA',
-            isAgroStoreItem: p['isAgroStoreItem'] == true,
-            rating: ((p['rating'] ?? 4.8) as num).toDouble(),
+            isAgroStoreItem: p['isAgroStoreItem'] == true || p['isAgroStoreItem'] == 'true',
+            rating: ((p['rating'] ?? 4.9) as num).toDouble(),
           );
         }).toList();
 
-        debugPrint('[MARKETPLACE] Loaded ${products.length} products from API.');
+        debugPrint('[MARKETPLACE] Loaded ${products.length} products (produce + store) from API.');
         return products;
       } catch (e) {
         debugPrint('[MARKETPLACE ERROR] $e');
@@ -242,6 +253,15 @@ class ApiService {
     }
 
     return SampleData.initialProducts;
+  }
+
+  Future<Map<String, dynamic>?> submitMarketplaceProduct(Map<String, dynamic> productData) async {
+    debugPrint('[API] Submitting marketplace produce item: ${productData['title']}');
+    final res = await _post('/marketplace', productData);
+    if (res is Map<String, dynamic>) {
+      return res;
+    }
+    return productData;
   }
 
   Future<Map<String, dynamic>?> submitProviderApplication(Map<String, dynamic> appData) async {
@@ -257,6 +277,25 @@ class ApiService {
     appData['submittedAt'] = DateTime.now().toString().split('.')[0];
     return appData;
   }
+
+  Future<Map<String, dynamic>?> submitMachine(Map<String, dynamic> machineData) async {
+    debugPrint('[API] Submitting machine listing to backend: ${machineData['name']}');
+    final res = await _post('/machines', machineData);
+    if (res is Map<String, dynamic>) {
+      return res;
+    }
+    return machineData;
+  }
+
+  Future<Map<String, dynamic>?> submitWorker(Map<String, dynamic> workerData) async {
+    debugPrint('[API] Submitting worker registration to backend: ${workerData['name']}');
+    final res = await _post('/workers', workerData);
+    if (res is Map<String, dynamic>) {
+      return res;
+    }
+    return workerData;
+  }
+
 
   Future<Map<String, dynamic>> fetchMyApplications([String? userId]) async {
     final targetId = userId ?? 'user_101';
@@ -287,5 +326,41 @@ class ApiService {
         }
       ]
     };
+  }
+
+  Future<List<Map<String, dynamic>>> fetchNotifications() async {
+    final data = await _get('/notifications');
+    if (data is List) {
+      return data.cast<Map<String, dynamic>>();
+    }
+    return [
+      {
+        'id': 'notif_1',
+        'title': '🌾 Seasonal Discount: 15% Off Harvesters',
+        'message': 'Book paddy and arecanut harvesters this week and get instant 15% discount on daily rates.',
+        'targetAudience': 'All Users',
+        'type': 'Promotion',
+        'sentAt': 'Today, 9:30 AM',
+        'isRead': false,
+      },
+      {
+        'id': 'notif_2',
+        'title': '⛈️ Weather Advisory: Rain Alert Shivamogga',
+        'message': 'Moderate to heavy rainfall expected in Malnad region. Protect harvested arecanut and crops.',
+        'targetAudience': 'Farmers',
+        'type': 'Alert',
+        'sentAt': 'Yesterday, 4:15 PM',
+        'isRead': false,
+      },
+      {
+        'id': 'notif_3',
+        'title': '🚜 Booking Confirmed: John Deere 5310',
+        'message': 'Your tractor rental booking #BK-9041 has been confirmed by provider. Operator arrives tomorrow.',
+        'targetAudience': 'Farmers',
+        'type': 'System',
+        'sentAt': '2 days ago',
+        'isRead': true,
+      },
+    ];
   }
 }

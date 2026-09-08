@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/config/constants.dart';
 import '../../../../core/utils/url_launcher_helper.dart';
+import '../../../../core/utils/app_share_helper.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/app_drawer.dart';
+import '../../../../core/widgets/app_image.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/localization/language_provider.dart';
+import '../../../../core/localization/app_translations.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -20,7 +25,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _notificationsEnabled = true;
   bool _locationAccess = true;
-  String _selectedLanguage = 'English (English)';
 
   @override
   Widget build(BuildContext context) {
@@ -81,27 +85,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     Stack(
                       children: [
-                        CircleAvatar(
-                          radius: 46,
-                          backgroundColor: const Color(0xFFFAF7F2),
-                          backgroundImage: NetworkImage(
-                            user?.profilePhoto ??
-                                'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=400',
+                        GestureDetector(
+                          onTap: () => _showProfilePhotoPickerModal(context, user),
+                          child: ClipOval(
+                            child: AppImage(
+                              url: user?.profilePhoto ?? 'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=400',
+                              width: 92,
+                              height: 92,
+                              fit: BoxFit.cover,
+                              placeholderIcon: Icons.person_rounded,
+                            ),
                           ),
                         ),
                         Positioned(
                           bottom: 0,
                           right: 0,
-                          child: CircleAvatar(
-                            radius: 16,
-                            backgroundColor: AppColors.primaryGreen,
-                            child: IconButton(
-                              icon: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Camera profile upload triggered')),
-                                );
-                              },
+                          child: GestureDetector(
+                            onTap: () => _showProfilePhotoPickerModal(context, user),
+                            child: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: AppColors.primaryGreen,
+                              child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
                             ),
                           ),
                         ),
@@ -241,30 +245,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => context.push('/workers/register'),
                   ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.admin_panel_settings_rounded, color: AppColors.primaryGreen),
-                    title: const Text('Admin Dashboard Portal'),
-                    subtitle: const Text('Manage platform verification & users'),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => context.push('/admin'),
-                  ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 24),
-
-            CustomButton(
-              text: 'Log Out',
-              isOutlined: true,
-              backgroundColor: AppColors.error,
-              textColor: AppColors.error,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logged out of Krushi Mithra')),
-                );
-              },
+            Row(
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: 'User Login',
+                    isOutlined: true,
+                    backgroundColor: AppColors.primaryGreen,
+                    textColor: AppColors.primaryGreen,
+                    onPressed: () => context.push('/login'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CustomButton(
+                    text: 'Log Out',
+                    isOutlined: true,
+                    backgroundColor: AppColors.error,
+                    textColor: AppColors.error,
+                    onPressed: () {
+                      ref.read(authProvider.notifier).logout();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Logged out of Krushi Mithra')),
+                      );
+                      context.push('/login');
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
           ],
@@ -352,15 +364,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: AppColors.warmBorder),
                           ),
-                          child: ListTile(
-                            leading: const Icon(Icons.language_rounded, color: AppColors.primaryGreen),
-                            title: Text(_selectedLanguage, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            trailing: const Icon(Icons.keyboard_arrow_right_rounded),
-                            onTap: () {
-                              _showLanguagePicker(context, (lang) {
-                                setState(() => _selectedLanguage = lang);
-                                setModalState(() => _selectedLanguage = lang);
-                              });
+                          child: Consumer(
+                            builder: (context, ref, _) {
+                              final currentLang = ref.watch(languageProvider);
+                              return ListTile(
+                                leading: const Icon(Icons.language_rounded, color: AppColors.primaryGreen),
+                                title: Text(currentLang, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                trailing: const Icon(Icons.keyboard_arrow_right_rounded),
+                                onTap: () {
+                                  _showLanguagePicker(context, (lang) {
+                                    ref.read(languageProvider.notifier).setLanguage(lang);
+                                    setModalState(() {});
+                                  });
+                                },
+                              );
                             },
                           ),
                         ),
@@ -474,6 +491,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   }
                                 },
                               ),
+                              const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(Icons.share_rounded, color: AppColors.primaryGreen),
+                                title: const Text('Share App with Farmers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                subtitle: const Text('Invite local farmers & friends on WhatsApp', style: TextStyle(fontSize: 11)),
+                                onTap: () => AppShareHelper.showShareAppBottomSheet(context),
+                              ),
                             ],
                           ),
                         ),
@@ -499,34 +523,201 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showLanguagePicker(BuildContext context, Function(String) onSelect) {
-    final languages = [
-      'English (English)',
-      'ಕನ್ನಡ (Kannada)',
-      'हिंदी (Hindi)',
-      'తెలుగు (Telugu)',
-      'தமிழ் (Tamil)',
-    ];
+    final languages = AppTranslations.supportedLanguages;
 
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: const Text('Select App Language', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.warmDarkBrown)),
+          title: Text(ref.tr('select_language'), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.warmDarkBrown)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: languages.map((lang) {
               return ListTile(
                 title: Text(lang, style: const TextStyle(fontWeight: FontWeight.w500)),
                 onTap: () {
+                  ref.read(languageProvider.notifier).setLanguage(lang);
                   onSelect(lang);
                   Navigator.pop(ctx);
+                  final msg = AppTranslations.tr('language_set', lang);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Language set to $lang')),
+                    SnackBar(content: Text('$msg $lang')),
                   );
                 },
               );
             }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  // Profile Photo ImagePicker Handler
+  Future<void> _pickProfileImage(ImageSource source, User? user) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1000,
+        maxHeight: 1000,
+      );
+
+      if (pickedFile != null && user != null) {
+        final updatedUser = user.copyWith(profilePhoto: pickedFile.path);
+        await ref.read(authProvider.notifier).updateProfile(updatedUser);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(source == ImageSource.camera
+                  ? '📸 Profile photo captured with camera!'
+                  : '🖼️ Profile photo updated from gallery!'),
+              backgroundColor: AppColors.primaryGreen,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[Profile ImagePicker Error] $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not update profile photo: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Profile Photo Source Selection Modal
+  void _showProfilePhotoPickerModal(BuildContext context, User? user) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Change Profile Photo',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppColors.warmDarkBrown,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Select photo source to update your profile avatar',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 16),
+
+              // Option 1: Take Photo with Camera
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFE8F5E9),
+                  child: Icon(Icons.camera_alt_rounded, color: AppColors.primaryGreen),
+                ),
+                title: const Text('Take Selfie with Camera', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Capture live photo using smartphone camera'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickProfileImage(ImageSource.camera, user);
+                },
+              ),
+
+              // Option 2: Choose from Photo Gallery
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFFF3E0),
+                  child: Icon(Icons.photo_library_rounded, color: Colors.orange),
+                ),
+                title: const Text('Choose from Photo Gallery', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Select profile picture from your phone gallery'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickProfileImage(ImageSource.gallery, user);
+                },
+              ),
+
+              // Option 3: Select Sample Avatar
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFF3E5F5),
+                  child: Icon(Icons.face_retouching_natural_rounded, color: Color(0xFF7E57C2)),
+                ),
+                title: const Text('Select Sample Avatar Photo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Choose from sample avatar pictures'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showSampleProfileAvatarDialog(context, user);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Sample Avatar Selection Dialog
+  void _showSampleProfileAvatarDialog(BuildContext context, User? user) {
+    final sampleAvatars = [
+      {'title': 'Farmer / Agriculture Profile', 'url': 'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?w=400'},
+      {'title': 'Tractor Operator Profile', 'url': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'},
+      {'title': 'Agricultural Specialist', 'url': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400'},
+      {'title': 'Farm Owner Profile', 'url': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400'},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'Select Sample Avatar',
+            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.warmDarkBrown),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: sampleAvatars.length,
+              itemBuilder: (context, idx) {
+                final preset = sampleAvatars[idx];
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: NetworkImage(preset['url']!),
+                    radius: 22,
+                  ),
+                  title: Text(preset['title']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  onTap: () async {
+                    if (user != null) {
+                      final updatedUser = user.copyWith(profilePhoto: preset['url']!);
+                      await ref.read(authProvider.notifier).updateProfile(updatedUser);
+                    }
+                    if (context.mounted) {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Updated profile picture to ${preset['title']}'),
+                          backgroundColor: AppColors.primaryGreen,
+                        ),
+                      );
+                    }
+                  },
+                );
+              },
+            ),
           ),
         );
       },

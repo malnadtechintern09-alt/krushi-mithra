@@ -54,6 +54,27 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
   @override
   Future<Product> addProduct(Product product) async {
     _products.insert(0, product);
+    try {
+      final productMap = {
+        'id': product.id,
+        'title': product.title,
+        'category': product.category,
+        'sellerId': product.sellerId,
+        'sellerName': product.sellerName,
+        'sellerPhone': product.sellerPhone,
+        'images': product.images,
+        'description': product.description,
+        'price': product.price,
+        'unit': product.unit,
+        'quantityAvailable': product.quantityAvailable,
+        'location': product.location,
+        'isAgroStoreItem': product.isAgroStoreItem,
+        'rating': product.rating,
+      };
+      await ApiService().submitMarketplaceProduct(productMap);
+    } catch (e) {
+      // Keep local addition if network fails
+    }
     return product;
   }
 
