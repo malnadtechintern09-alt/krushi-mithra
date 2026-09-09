@@ -2,7 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UrlLauncherHelper {
-  /// Builds a structured WhatsApp message with "Tips for a safe deal", item link, and inquiry body
+  static const String playStorePackageId = 'com.krushimithra.krushi_mithra';
+
+  /// Generates a direct Play Store link targeting the Krushi Mithra App
+  static String buildPlayStoreAppLink({
+    required String itemType,
+    required String itemId,
+  }) {
+    return 'https://play.google.com/store/apps/details?id=$playStorePackageId&referrer=itemType%3D$itemType%26itemId%3D$itemId';
+  }
+
+  /// Builds a structured WhatsApp message with "Tips for a safe deal", Play Store app link, and inquiry body
   static String buildStructuredWhatsAppMessage({
     required String category, // e.g. "Produce Listing", "Farm Worker Profile", "Machinery Rental"
     required String recipientName,
@@ -16,6 +26,7 @@ class UrlLauncherHelper {
     final cleanName = recipientName.replaceAll(RegExp(r'\s+'), ' ').trim();
 
     final body = customMessage ?? "I'm interested in your $cleanTitle posted on Krushi Mithra.";
+    final playStoreLink = buildPlayStoreAppLink(itemType: itemType, itemId: itemId);
 
     return '''*Tips for a safe deal*
 
@@ -25,7 +36,7 @@ class UrlLauncherHelper {
 4. Be safe, take necessary precautions while meeting with buyers and sellers.
 5. Krushi Mithra team is not responsible for any fraudulent activities.
 
-Your $cleanCategory: https://krushimithra.com/$itemType/$itemId
+Your $cleanCategory: $playStoreLink
 
 Hi $cleanName,
 

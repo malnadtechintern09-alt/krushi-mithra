@@ -4551,7 +4551,7 @@ function openWhatsAppModal(type, id) {
     recipientPhone = item.sellerPhone || '+91 8904089051';
     itemTitle = item.title || 'Produce Listing';
     categoryName = 'Produce Listing';
-    itemUrl = `https://krushimithra.com/marketplace/${item.id}`;
+    itemUrl = `https://play.google.com/store/apps/details?id=com.krushimithra.krushi_mithra&referrer=itemType%3Dmarketplace%26itemId%3D${item.id}`;
   } else if (type === 'worker') {
     const w = (globalData.workers || []).find(w => w.id === id);
     if (!w) return;
@@ -4559,7 +4559,7 @@ function openWhatsAppModal(type, id) {
     recipientPhone = w.phone || '+91 8904089051';
     itemTitle = `${w.name} (${w.category || 'Worker'})`;
     categoryName = 'Farm Worker Profile';
-    itemUrl = `https://krushimithra.com/workers/${w.id}`;
+    itemUrl = `https://play.google.com/store/apps/details?id=com.krushimithra.krushi_mithra&referrer=itemType%3Dworkers%26itemId%3D${w.id}`;
   } else if (type === 'machine') {
     const m = (globalData.machines || []).find(m => m.id === id);
     if (!m) return;
@@ -4567,7 +4567,7 @@ function openWhatsAppModal(type, id) {
     recipientPhone = m.ownerPhone || '+91 8904089051';
     itemTitle = m.name || 'Tractor / Equipment';
     categoryName = 'Machinery Rental';
-    itemUrl = `https://krushimithra.com/machines/${m.id}`;
+    itemUrl = `https://play.google.com/store/apps/details?id=com.krushimithra.krushi_mithra&referrer=itemType%3Dmachines%26itemId%3D${m.id}`;
   } else if (type === 'user' || type === 'farmer') {
     const u = (globalData.users || []).find(u => u.id === id) || (globalData.farmers || []).find(f => f.id === id);
     if (!u) return;
@@ -4575,7 +4575,7 @@ function openWhatsAppModal(type, id) {
     recipientPhone = u.phone || '+91 8904089051';
     itemTitle = 'Krushi Mithra Account';
     categoryName = 'Krushi Mithra Account';
-    itemUrl = `https://krushimithra.com/users/${u.id}`;
+    itemUrl = `https://play.google.com/store/apps/details?id=com.krushimithra.krushi_mithra&referrer=itemType%3Dusers%26itemId%3D${u.id}`;
   } else if (type === 'booking') {
     const b = (globalData.bookings || []).find(b => b.id === id);
     if (!b) return;
@@ -4583,14 +4583,14 @@ function openWhatsAppModal(type, id) {
     recipientPhone = b.customerPhone || b.phone || '+91 8904089051';
     itemTitle = b.targetTitle || 'Booking';
     categoryName = 'Service Booking';
-    itemUrl = `https://krushimithra.com/bookings/${b.id}`;
+    itemUrl = `https://play.google.com/store/apps/details?id=com.krushimithra.krushi_mithra&referrer=itemType%3Dbookings%26itemId%3D${b.id}`;
   }
 
   const tipsBlock = safetyTips.join('\n');
-  const playStoreLink = 'https://play.google.com/store/apps/details?id=com.krushimithra.app';
+  const playStoreLink = 'https://play.google.com/store/apps/details?id=com.krushimithra.krushi_mithra';
   const bodyText = `Hi ${recipientName},\n\nI'm interested in your ${itemTitle} posted on Krushi Mithra.\n\nIs it available?`;
 
-  const fullWhatsAppMessage = `*${safetyHeader}*\n\n${tipsBlock}\n\nYour ${categoryName}: ${itemUrl}\n📲 Download App on Play Store: ${playStoreLink}\n\n${bodyText}`;
+  const fullWhatsAppMessage = `*${safetyHeader}*\n\n${tipsBlock}\n\nYour ${categoryName}: ${itemUrl}\n\n${bodyText}`;
 
   const modalTitle = document.getElementById('modal-title');
   const modalBody = document.getElementById('modal-body');

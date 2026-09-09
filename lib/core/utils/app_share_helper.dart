@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../app/theme/app_colors.dart';
 
 class AppShareHelper {
-  static const String playStorePackageId = 'com.krushimithra.app';
+  static const String playStorePackageId = 'com.krushimithra.krushi_mithra';
   static const String appDownloadUrl = 'https://play.google.com/store/apps/details?id=$playStorePackageId';
 
   static const String defaultAppShareText = '''*🌾 KRUSHI MITHRA 🌾*
