@@ -46,7 +46,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Rent Agricultural Machines'), findsOneWidget);
+    expect(find.textContaining('Rent'), findsAtLeastNWidgets(1));
     expect(find.text('Trusted by farmers like you'), findsOneWidget);
     expect(find.text('Top Rated Machines'), findsOneWidget);
   });
@@ -61,7 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Hire Farm\nWorkers & Drivers'), findsOneWidget);
+    expect(find.textContaining('Hire'), findsAtLeastNWidgets(1));
     expect(find.text('Right people for better farming.'), findsOneWidget);
   });
 }

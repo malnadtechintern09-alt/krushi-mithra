@@ -9,4 +9,5 @@ abstract class WorkerRepository {
   Future<Worker?> getWorkerById(String id);
   Future<Worker> registerWorker(Worker worker);
   Future<Worker> updateWorker(Worker worker);
+  Future<void> deleteWorker(String id);
 }

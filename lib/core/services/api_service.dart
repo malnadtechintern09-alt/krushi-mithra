@@ -6,6 +6,7 @@ import '../database/sample_data.dart';
 import '../../features/machinery/domain/entities/machine.dart';
 import '../../features/workers/domain/entities/worker.dart';
 import '../../features/marketplace/domain/entities/product.dart';
+import '../../features/bookings_orders/domain/entities/booking.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -35,6 +36,10 @@ class ApiService {
     }
     _activeBaseUrl = ApiConfig.baseUrl;
     return _activeBaseUrl!;
+  }
+
+  void resetWorkingBaseUrl() {
+    _activeBaseUrl = null;
   }
 
   Future<dynamic> _get(String endpoint) async {
@@ -70,6 +75,43 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('[API ERROR] Failed POST $base$endpoint: $e');
+      _activeBaseUrl = null;
+    }
+    return null;
+  }
+
+  Future<dynamic> _put(String endpoint, Map<String, dynamic> data) async {
+    final base = await _getWorkingBaseUrl();
+    try {
+      debugPrint('[API] PUT $base$endpoint');
+      final request = await _client.openUrl('PUT', Uri.parse('$base$endpoint')).timeout(const Duration(milliseconds: 10000));
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode(data));
+      final response = await request.close();
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        final content = await response.transform(utf8.decoder).join();
+        debugPrint('[API] Response: ${response.statusCode} from $endpoint');
+        return content.isNotEmpty ? jsonDecode(content) : {'success': true};
+      }
+    } catch (e) {
+      debugPrint('[API ERROR] Failed PUT $base$endpoint: $e');
+      _activeBaseUrl = null;
+    }
+    return null;
+  }
+
+  Future<dynamic> _delete(String endpoint) async {
+    final base = await _getWorkingBaseUrl();
+    try {
+      debugPrint('[API] DELETE $base$endpoint');
+      final request = await _client.openUrl('DELETE', Uri.parse('$base$endpoint')).timeout(const Duration(milliseconds: 10000));
+      final response = await request.close();
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        final content = await response.transform(utf8.decoder).join();
+        return content.isNotEmpty ? jsonDecode(content) : {'success': true};
+      }
+    } catch (e) {
+      debugPrint('[API ERROR] Failed DELETE $base$endpoint: $e');
       _activeBaseUrl = null;
     }
     return null;
@@ -352,15 +394,106 @@ class ApiService {
         'sentAt': 'Yesterday, 4:15 PM',
         'isRead': false,
       },
-      {
-        'id': 'notif_3',
-        'title': '🚜 Booking Confirmed: John Deere 5310',
-        'message': 'Your tractor rental booking #BK-9041 has been confirmed by provider. Operator arrives tomorrow.',
-        'targetAudience': 'Farmers',
-        'type': 'System',
-        'sentAt': '2 days ago',
-        'isRead': true,
-      },
     ];
+  }
+
+  Future<List<Booking>> fetchBookings([String? userId]) async {
+    debugPrint('[BOOKINGS] Requesting bookings list from backend API...');
+    final data = await _get('/bookings');
+    
+    List<dynamic>? rawList;
+    if (data is List) {
+      rawList = data;
+    } else if (data is Map<String, dynamic> && data['bookings'] is List) {
+      rawList = data['bookings'] as List;
+    }
+
+    if (rawList != null && rawList.isNotEmpty) {
+      try {
+        final bookings = rawList.map((item) {
+          final b = item as Map<String, dynamic>;
+          return Booking(
+            id: b['id']?.toString() ?? 'b_${DateTime.now().millisecondsSinceEpoch}',
+            bookingType: b['bookingType']?.toString() ?? 'machine',
+            targetId: b['targetId']?.toString() ?? '',
+            targetTitle: b['targetTitle']?.toString() ?? 'Rental Booking',
+            targetImageUrl: b['targetImageUrl']?.toString() ?? 'https://images.unsplash.com/photo-1592861956120-e524fc739696?w=800',
+            customerId: b['customerId']?.toString() ?? 'usr_101',
+            customerName: b['customerName']?.toString() ?? 'Farmer Customer',
+            customerPhone: b['customerPhone']?.toString() ?? '',
+            providerId: b['providerId']?.toString() ?? 'provider_1',
+            providerName: b['providerName']?.toString() ?? 'Service Provider',
+            providerPhone: b['providerPhone']?.toString() ?? '',
+            startDate: b['startDate'] != null ? DateTime.parse(b['startDate'].toString()) : DateTime.now(),
+            endDate: b['endDate'] != null ? DateTime.parse(b['endDate'].toString()) : DateTime.now().add(const Duration(days: 1)),
+            totalAmount: ((b['totalAmount'] ?? 2200) as num).toDouble(),
+            paymentMethod: b['paymentMethod']?.toString() ?? 'Pay After Service',
+            paymentStatus: b['paymentStatus']?.toString() ?? 'Pending',
+            bookingStatus: b['bookingStatus']?.toString() ?? 'Pending',
+            createdAt: b['createdAt'] != null ? DateTime.tryParse(b['createdAt'].toString()) ?? DateTime.now() : DateTime.now(),
+            serviceLocation: b['serviceLocation']?.toString() ?? 'Shivamogga, KA',
+          );
+        }).toList();
+
+        if (userId != null && userId.isNotEmpty) {
+          return bookings.where((b) => b.customerId == userId || b.providerId == userId).toList();
+        }
+        return bookings;
+      } catch (e) {
+        debugPrint('[BOOKINGS ERROR] Failed to parse bookings: $e');
+      }
+    }
+
+    return SampleData.initialBookings;
+  }
+
+  Future<Map<String, dynamic>?> submitBooking(Map<String, dynamic> bookingData) async {
+    debugPrint('[API] Submitting booking: ${bookingData['targetTitle']}');
+    final res = await _post('/bookings', bookingData);
+    if (res is Map<String, dynamic>) {
+      return res;
+    }
+    return bookingData;
+  }
+
+  Future<bool> updateBookingStatusApi(String bookingId, String status) async {
+    final res = await _put('/bookings/$bookingId', {'bookingStatus': status});
+    return res != null;
+  }
+
+  Future<bool> updateMachineApi(Map<String, dynamic> machineData) async {
+    final id = machineData['id'];
+    if (id == null) return false;
+    final res = await _put('/machines/$id', machineData);
+    return res != null;
+  }
+
+  Future<bool> deleteMachineApi(String id) async {
+    final res = await _delete('/machines/$id');
+    return res != null;
+  }
+
+  Future<bool> updateWorkerApi(Map<String, dynamic> workerData) async {
+    final id = workerData['id'];
+    if (id == null) return false;
+    final res = await _put('/workers/$id', workerData);
+    return res != null;
+  }
+
+  Future<bool> deleteWorkerApi(String id) async {
+    final res = await _delete('/workers/$id');
+    return res != null;
+  }
+
+  Future<bool> updateProductApi(Map<String, dynamic> productData) async {
+    final id = productData['id'];
+    if (id == null) return false;
+    final res = await _put('/marketplace/$id', productData);
+    return res != null;
+  }
+
+  Future<bool> deleteProductApi(String id) async {
+    final res = await _delete('/marketplace/$id');
+    return res != null;
   }
 }

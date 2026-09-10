@@ -82,11 +82,27 @@ class MachineryRepositoryImpl implements MachineryRepository {
     if (index != -1) {
       _machines[index] = machine;
     }
+    try {
+      final machineMap = {
+        'id': machine.id,
+        'name': machine.name,
+        'category': machine.category,
+        'rentalPricePerDay': machine.rentalPricePerDay,
+        'location': machine.location,
+        'isAvailable': machine.isAvailable,
+        'availabilityStatus': machine.isAvailable ? 'Available' : 'Unavailable',
+        'rating': machine.rating,
+      };
+      await ApiService().updateMachineApi(machineMap);
+    } catch (_) {}
     return machine;
   }
 
   @override
   Future<void> deleteMachine(String id) async {
     _machines.removeWhere((m) => m.id == id);
+    try {
+      await ApiService().deleteMachineApi(id);
+    } catch (_) {}
   }
 }

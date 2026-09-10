@@ -12,6 +12,9 @@ import '../../../../core/widgets/notifications_modal.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../machinery/presentation/providers/machinery_provider.dart';
+import '../../../marketplace/presentation/providers/marketplace_provider.dart';
+import '../../../workers/presentation/providers/worker_provider.dart';
+import '../../../bookings_orders/presentation/providers/bookings_orders_provider.dart';
 import '../../../../core/localization/language_provider.dart';
 import '../../../../core/localization/app_translations.dart';
 
@@ -144,7 +147,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         color: AppColors.primaryGreen,
         onRefresh: () async {
           ref.invalidate(machineryListProvider);
-          await ref.read(machineryListProvider.future);
+          ref.invalidate(marketplaceProductsProvider);
+          ref.invalidate(workerListProvider);
+          ref.invalidate(userBookingsProvider);
+          await Future.wait([
+            ref.read(machineryListProvider.future),
+            ref.read(marketplaceProductsProvider.future),
+            ref.read(workerListProvider.future),
+          ]);
         },
         child: SingleChildScrollView(
           child: Column(
@@ -171,9 +181,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Namaste,',
-                                  style: TextStyle(
+                                Text(
+                                  ref.tr('greeting_namaste'),
+                                  style: const TextStyle(
                                     color: Color(0xFF2D1C10),
                                     fontSize: 17,
                                     fontWeight: FontWeight.w700,
@@ -200,20 +210,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 3),
-                                const Text(
-                                  'Together we grow,',
-                                  style: TextStyle(
-                                    color: Color(0xFF2D1C10),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.white),
-                                    ],
-                                  ),
-                                ),
-                                const Text(
-                                  'together we prosper.',
-                                  style: TextStyle(
+                                Text(
+                                  ref.tr('tagline'),
+                                  style: const TextStyle(
                                     color: Color(0xFF2D1C10),
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
@@ -389,7 +388,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Expanded(
                     child: _buildActionCategoryCard(
                       context: context,
-                      title: 'Rent\nMachinery',
+                      title: ref.tr('rent_machinery_short'),
                       icon: Icons.agriculture_rounded,
                       bgColor: const Color(0xFFF1F8F3), // Soft Mint Green
                       iconColor: const Color(0xFF2E7D32),
@@ -400,7 +399,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Expanded(
                     child: _buildActionCategoryCard(
                       context: context,
-                      title: 'Hire\nWorkers',
+                      title: ref.tr('hire_workers_short'),
                       icon: Icons.groups_rounded,
                       bgColor: const Color(0xFFFFF6ED), // Soft Peach/Orange
                       iconColor: const Color(0xFFE65100),
@@ -411,7 +410,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Expanded(
                     child: _buildActionCategoryCard(
                       context: context,
-                      title: 'Buy & Sell\nProduce',
+                      title: ref.tr('buy_sell_produce_short'),
                       icon: Icons.shopping_basket_rounded,
                       bgColor: const Color(0xFFEFF6FF), // Soft Blue
                       iconColor: const Color(0xFF1565C0),
@@ -422,7 +421,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Expanded(
                     child: _buildActionCategoryCard(
                       context: context,
-                      title: 'Agro\nStore',
+                      title: ref.tr('agro_store_short'),
                       icon: Icons.storefront_rounded,
                       bgColor: const Color(0xFFF5F3FF), // Soft Purple
                       iconColor: const Color(0xFF7E57C2),
@@ -468,22 +467,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: const Icon(Icons.agriculture_rounded, color: Colors.white, size: 28),
                       ),
                       const SizedBox(width: 14),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Have a Machine or Farming Skill?',
-                              style: TextStyle(
+                              ref.tr('have_machine_or_skill'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Join as Owner / Worker to start earning',
-                              style: TextStyle(
+                              ref.tr('join_owner_worker'),
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
                               ),
@@ -497,9 +496,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           color: const Color(0xFFFF6F00),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
-                          'Join Now',
-                          style: TextStyle(
+                        child: Text(
+                          ref.tr('join_now'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
@@ -520,9 +519,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Top Machines Near You',
-                    style: TextStyle(
+                  Text(
+                    ref.tr('top_machines_near_you'),
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: AppColors.warmDarkBrown,
@@ -530,18 +529,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   GestureDetector(
                     onTap: () => context.go('/machinery'),
-                    child: const Row(
+                    child: Row(
                       children: [
                         Text(
-                          'See all',
-                          style: TextStyle(
+                          ref.tr('view_all'),
+                          style: const TextStyle(
                             color: Color(0xFFFF6F00),
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
                         ),
-                        SizedBox(width: 2),
-                        Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFFF6F00)),
+                        const SizedBox(width: 2),
+                        const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFFF6F00)),
                       ],
                     ),
                   ),
@@ -775,18 +774,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
-                              'List your machine',
-                              style: TextStyle(
+                            Text(
+                              ref.tr('rent_machinery'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 17,
                                 color: Color(0xFF1E3A24), // Dark Forest Green
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Earn more by renting your machines and help other farmers.',
-                              style: TextStyle(
+                            Text(
+                              ref.tr('safety_verified'),
+                              style: const TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF5A4D3E),
                                 height: 1.25,
@@ -811,12 +810,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ],
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      'List Now',
-                                      style: TextStyle(
+                                      ref.tr('post_ad'),
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12,

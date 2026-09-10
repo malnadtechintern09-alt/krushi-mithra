@@ -84,11 +84,26 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository {
     if (index != -1) {
       _products[index] = product;
     }
+    try {
+      final productMap = {
+        'id': product.id,
+        'title': product.title,
+        'category': product.category,
+        'price': product.price,
+        'unit': product.unit,
+        'quantityAvailable': product.quantityAvailable,
+        'location': product.location,
+      };
+      await ApiService().updateProductApi(productMap);
+    } catch (_) {}
     return product;
   }
 
   @override
   Future<void> deleteProduct(String id) async {
     _products.removeWhere((p) => p.id == id);
+    try {
+      await ApiService().deleteProductApi(id);
+    } catch (_) {}
   }
 }

@@ -80,6 +80,27 @@ class WorkerRepositoryImpl implements WorkerRepository {
     if (index != -1) {
       _workers[index] = worker;
     }
+    try {
+      final workerMap = {
+        'id': worker.id,
+        'name': worker.name,
+        'phone': worker.phone,
+        'skills': worker.skills,
+        'location': worker.location,
+        'dailyRate': worker.dailyRate,
+        'isAvailable': worker.isAvailable,
+        'availabilityStatus': worker.isAvailable ? 'Available' : 'Unavailable',
+      };
+      await ApiService().updateWorkerApi(workerMap);
+    } catch (_) {}
     return worker;
+  }
+
+  @override
+  Future<void> deleteWorker(String id) async {
+    _workers.removeWhere((w) => w.id == id);
+    try {
+      await ApiService().deleteWorkerApi(id);
+    } catch (_) {}
   }
 }
